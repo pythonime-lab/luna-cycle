@@ -1490,7 +1490,6 @@
           >
             <select
               id="pain-view-month"
-              class="apply-btn"
               onchange="updatePainChart()"
               style="
                 flex: 1;
@@ -1498,27 +1497,53 @@
                 font-size: 0.875rem;
                 background: rgba(255, 255, 255, 0.1);
                 border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 0.5rem;
                 color: white;
                 cursor: pointer;
               "
             >
-              <option value="">All Months</option>
-              <option value="0">January</option>
-              <option value="1">February</option>
-              <option value="2">March</option>
-              <option value="3">April</option>
-              <option value="4">May</option>
-              <option value="5">June</option>
-              <option value="6">July</option>
-              <option value="7">August</option>
-              <option value="8">September</option>
-              <option value="9">October</option>
-              <option value="10">November</option>
-              <option value="11">December</option>
+              <option value="" style="background: #1a1a2e; color: white">
+                All Months
+              </option>
+              <option value="0" style="background: #1a1a2e; color: white">
+                January
+              </option>
+              <option value="1" style="background: #1a1a2e; color: white">
+                February
+              </option>
+              <option value="2" style="background: #1a1a2e; color: white">
+                March
+              </option>
+              <option value="3" style="background: #1a1a2e; color: white">
+                April
+              </option>
+              <option value="4" style="background: #1a1a2e; color: white">
+                May
+              </option>
+              <option value="5" style="background: #1a1a2e; color: white">
+                June
+              </option>
+              <option value="6" style="background: #1a1a2e; color: white">
+                July
+              </option>
+              <option value="7" style="background: #1a1a2e; color: white">
+                August
+              </option>
+              <option value="8" style="background: #1a1a2e; color: white">
+                September
+              </option>
+              <option value="9" style="background: #1a1a2e; color: white">
+                October
+              </option>
+              <option value="10" style="background: #1a1a2e; color: white">
+                November
+              </option>
+              <option value="11" style="background: #1a1a2e; color: white">
+                December
+              </option>
             </select>
             <select
               id="pain-view-year"
-              class="apply-btn"
               onchange="updatePainChart()"
               style="
                 flex: 1;
@@ -1526,6 +1551,7 @@
                 font-size: 0.875rem;
                 background: rgba(255, 255, 255, 0.1);
                 border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 0.5rem;
                 color: white;
                 cursor: pointer;
               "
@@ -2915,6 +2941,7 @@
             const option = document.createElement("option");
             option.value = String(year);
             option.textContent = String(year);
+            option.style.cssText = "background: #1a1a2e; color: white;";
             yearSelect.appendChild(option);
           }
           yearSelect.value = String(currentYear);
