@@ -1,8 +1,8 @@
 /*
- * Luna — Service Worker
+ * Her Cycle Keeper — Service Worker
  * ─────────────────────────────────────────────────────────────
  * Strategy: Cache-first for app shell, network-only for nothing
- * (Luna has no network calls at all — everything is local).
+ * (Her Cycle Keeper has no network calls at all — everything is local).
  *
  * Versioned cache: bump CACHE_VERSION when deploying updates
  * so stale caches are automatically purged on activation.
@@ -16,10 +16,10 @@
 "use strict";
 
 const CACHE_VERSION = "v1.0.0";
-const CACHE_NAME = `luna-${CACHE_VERSION}`;
+const CACHE_NAME = `hercyclekeeper-${CACHE_VERSION}`;
 
 // App shell — all files that must be available offline
-const APP_SHELL = ["/", "/index.html", "/manifest.json"];
+const APP_SHELL = ["/", "/index.html", "/style.css", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
   self.skipWaiting(); // activate new SW immediately
@@ -72,12 +72,12 @@ self.addEventListener("notificationclick", (event) => {
     clients.matchAll({ type: "window" }).then((clientList) => {
       // Focus existing window if open
       for (let client of clientList) {
-        if (client.url === "/" || client.url.includes("luna-cycle"))
+        if (client.url === "/" || client.url.includes("hercyclekeeper"))
           return client.focus();
       }
       // Open new window if not already open
       if (clients.openWindow) {
-        return clients.openWindow("/luna-cycle/");
+        return clients.openWindow("/");
       }
     })
   );
