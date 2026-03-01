@@ -15,10 +15,12 @@
     style-src 'self' 'unsafe-inline';
     font-src 'self' data:;
     img-src 'self' data:;
+    manifest-src 'self';
     connect-src 'none';
     object-src 'none';
     base-uri 'self';
     form-action 'none';
+    frame-ancestors 'none';
   "
     />
 
@@ -1245,9 +1247,9 @@
         Your private cycle companion. 100% free. Encrypted on your device.
       </p>
       <div class="onboard-form">
-        <label>First day of your last period</label>
+        <label for="ob-last-period">First day of your last period</label>
         <input type="date" id="ob-last-period" autocomplete="off" />
-        <label>Average cycle length (days)</label>
+        <label for="ob-cycle-len">Average cycle length (days)</label>
         <input
           type="number"
           id="ob-cycle-len"
@@ -1256,7 +1258,7 @@
           max="45"
           autocomplete="off"
         />
-        <label>Average period duration (days)</label>
+        <label for="ob-period-dur">Average period duration (days)</label>
         <input
           type="number"
           id="ob-period-dur"
