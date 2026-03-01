@@ -1084,6 +1084,10 @@
           font-size: 0.9375rem;
         }
       }
+      
+      .install-btn.hidden {
+        display: none !important;
+      }
     </style>
   </head>
   <body>
@@ -2660,27 +2664,45 @@
 
       // Listen for beforeinstallprompt event (PWA install)
       window.addEventListener("beforeinstallprompt", (e) => {
+        console.log("beforeinstallprompt event fired - PWA can be installed");
         e.preventDefault();
         deferredPrompt = e;
-        document.getElementById("install-btn").classList.remove("hidden");
+        const btn = document.getElementById("install-btn");
+        if (btn) {
+          btn.classList.remove("hidden");
+          console.log("Install button made visible");
+        }
       });
 
       // Hide install button after successful install
       window.addEventListener("appinstalled", () => {
+        console.log("App installed successfully");
         deferredPrompt = null;
-        document.getElementById("install-btn").classList.add("hidden");
+        const btn = document.getElementById("install-btn");
+        if (btn) btn.classList.add("hidden");
       });
 
       function installApp() {
+        console.log("installApp() clicked. deferredPrompt exists:", !!deferredPrompt);
         if (deferredPrompt) {
           deferredPrompt.prompt();
           deferredPrompt.userChoice.then((choiceResult) => {
+            console.log("Install choice:", choiceResult.outcome);
             if (choiceResult.outcome === "accepted") {
               console.log("User accepted the install prompt");
+            } else {
+              console.log("User dismissed the install prompt");
             }
             deferredPrompt = null;
-            document.getElementById("install-btn").classList.add("hidden");
+            const btn = document.getElementById("install-btn");
+            if (btn) btn.classList.add("hidden");
           });
+        } else {
+          console.error("No install prompt available. Possible reasons:");
+          console.error("- App is already installed");
+          console.error("- Browser doesn't support PWA install (Safari, Firefox)");
+          console.error("- App doesn't meet PWA criteria");
+          console.error("- Not on HTTPS");
         }
       }
       async function testNotification() {
