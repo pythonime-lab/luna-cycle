@@ -1084,7 +1084,7 @@
           font-size: 0.9375rem;
         }
       }
-      
+
       .install-btn.hidden {
         display: none !important;
       }
@@ -2683,7 +2683,10 @@
       });
 
       function installApp() {
-        console.log("installApp() clicked. deferredPrompt exists:", !!deferredPrompt);
+        console.log(
+          "installApp() clicked. deferredPrompt exists:",
+          !!deferredPrompt
+        );
         if (deferredPrompt) {
           deferredPrompt.prompt();
           deferredPrompt.userChoice.then((choiceResult) => {
@@ -2700,7 +2703,9 @@
         } else {
           console.error("No install prompt available. Possible reasons:");
           console.error("- App is already installed");
-          console.error("- Browser doesn't support PWA install (Safari, Firefox)");
+          console.error(
+            "- Browser doesn't support PWA install (Safari, Firefox)"
+          );
           console.error("- App doesn't meet PWA criteria");
           console.error("- Not on HTTPS");
         }
