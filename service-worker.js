@@ -37,8 +37,8 @@ self.addEventListener("activate", (event) => {
           keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
         )
       )
+      .then(() => self.clients.claim())
   );
-  self.clients.claim(); // take control of existing tabs
 });
 
 self.addEventListener("fetch", (event) => {
@@ -62,59 +62,6 @@ self.addEventListener("fetch", (event) => {
         return response;
       });
     })
-  );
-});
-
-// Handle messages from the app (for notification scheduling)
-self.addEventListener("message", (event) => {
-  if (event.data.type === "SCHEDULE_NOTIFICATION") {
-    console.log("Service Worker received notification schedule request");
-    // Store for periodic background sync
-    localStorage.setItem(
-      "luna_notify_pending",
-      JSON.stringify(event.data.data)
-    );
-  }
-});
-
-// Check if it's time to show a notification
-async function checkAndShowNotification() {
-  const pending = localStorage.getItem("luna_notify_pending");
-  if (!pending) return;
-
-  try {
-    const data = JSON.parse(pending);
-    const notifyDate = new Date(data.date);
-    const now = new Date();
-
-    // If notification time has arrived and hasn't been shown in this session
-    if (now >= notifyDate && notifyDate.toDateString() === now.toDateString()) {
-      const lastShown = localStorage.getItem("luna_notify_shown_date");
-      if (lastShown !== now.toDateString()) {
-        await self.registration.showNotification("Period Coming Soon", {
-          body: `Your period is expected in ${data.daysBefore} day${
-            data.daysBefore > 1 ? "s" : ""
-          }.`,
-          icon: "/luna-cycle/icons/icon-192.png",
-          badge: "/luna-cycle/icons/icon-192.png",
-          tag: "luna-period-notification",
-          requireInteraction: true,
-        });
-        localStorage.setItem("luna_notify_shown_date", now.toDateString());
-      }
-    }
-  } catch (err) {
-    console.warn("Failed to check/show notification:", err);
-  }
-}
-
-// Check on activation
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    (async () => {
-      await checkAndShowNotification();
-      self.clients.claim();
-    })()
   );
 });
 

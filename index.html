@@ -2690,12 +2690,10 @@
           });
         }
       }
-
       async function testNotification() {
         console.log("testNotification() called");
 
         if (!("Notification" in window)) {
-          console.error("Notifications not supported");
           showModal({
             icon: "❌",
             title: "Not Supported",
@@ -2706,12 +2704,19 @@
           return;
         }
 
-        console.log("Notification permission:", Notification.permission);
+        if (Notification.permission === "denied") {
+          showModal({
+            icon: "⚠️",
+            title: "Permission Denied",
+            msg: "Notifications are blocked. Please enable them in your browser settings.",
+            cancelText: "",
+            confirmText: "OK",
+          });
+          return;
+        }
 
         if (Notification.permission === "default") {
-          console.log("Requesting notification permission...");
           const permission = await Notification.requestPermission();
-          console.log("Permission result:", permission);
           if (permission !== "granted") {
             showModal({
               icon: "⚠️",
@@ -2724,18 +2729,6 @@
           }
         }
 
-        if (Notification.permission === "denied") {
-          console.error("Notifications denied by user");
-          showModal({
-            icon: "⚠️",
-            title: "Permission Denied",
-            msg: "Notifications are blocked. Please enable them in your browser settings.",
-            cancelText: "",
-            confirmText: "OK",
-          });
-          return;
-        }
-
         const days = state.notificationDaysBefore || 2;
         const title = "Period Coming Soon";
         const options = {
@@ -2746,41 +2739,11 @@
           requireInteraction: false,
         };
 
-        console.log("Showing test notification with options:", options);
-
-        // Try Service Worker first (only on http/https)
-        if (
-          "serviceWorker" in navigator &&
-          (location.protocol === "http:" || location.protocol === "https:")
-        ) {
-          try {
-            console.log("Service Worker available, waiting for ready...");
-            const registration = await navigator.serviceWorker.ready;
-            console.log("Service Worker ready:", registration);
-            if (registration) {
-              console.log("Showing test notification via Service Worker...");
-              await registration.showNotification(title, options);
-              console.log(
-                "Test notification shown successfully via Service Worker"
-              );
-              return;
-            }
-          } catch (err) {
-            console.warn("Service Worker notification failed:", err.message);
-          }
-        } else {
-          console.log(
-            "Service Worker not available (file:// protocol or not supported)"
-          );
-        }
-
-        // Fallback: use direct notification API (works on web, fails on mobile)
-        console.log("Using direct Notification API as fallback...");
         try {
           const notification = new Notification(title, options);
-          console.log("Direct notification created successfully");
+          console.log("Notification shown successfully");
         } catch (err) {
-          console.error("Direct notification failed:", err);
+          console.error("Notification failed:", err);
           showModal({
             icon: "⚠️",
             title: "Notification Failed",
@@ -2824,29 +2787,16 @@
         if (isNaN(notifyDate.getTime())) {
           return;
         }
-
         const notifyDateStr = notifyDate.toISOString();
         localStorage.setItem("luna_notify_date", notifyDateStr);
 
         // Request notification permission if needed
-        if (
-          "serviceWorker" in navigator &&
-          "Notification" in window &&
-          Notification.permission === "default"
-        ) {
+        if ("Notification" in window && Notification.permission === "default") {
           try {
             await Notification.requestPermission();
           } catch (err) {
             console.warn("Notification permission request failed:", err);
           }
-        }
-
-        // If permission granted, show notifications are enabled
-        if (Notification.permission === "granted") {
-          console.log(
-            "Notifications enabled. Next notification scheduled for:",
-            notifyDateStr
-          );
         }
       }
 
@@ -2914,25 +2864,19 @@
               const lastShown = localStorage.getItem("luna_notify_shown_date");
               if (lastShown !== today.toDateString()) {
                 const days = state.notificationDaysBefore || 2;
-                if ("serviceWorker" in navigator) {
-                  try {
-                    const registration = await navigator.serviceWorker.ready;
-                    await registration.showNotification("Period Coming Soon", {
-                      body: `Your period is expected in ${days} day${
-                        days > 1 ? "s" : ""
-                      }.`,
-                      icon: "/luna-cycle/icons/icon-192.png",
-                      badge: "/luna-cycle/icons/icon-192.png",
-                      tag: "luna-period-notification",
-                      requireInteraction: true,
-                    });
-                    localStorage.setItem(
-                      "luna_notify_shown_date",
-                      today.toDateString()
-                    );
-                  } catch (err) {
-                    console.warn("Failed to show notification:", err);
-                  }
+                try {
+                  new Notification("Period Coming Soon", {
+                    body: `Your period is expected in ${days} day${
+                      days > 1 ? "s" : ""
+                    }.`,
+                    icon: "/luna-cycle/icons/icon-192.png",
+                    badge: "/luna-cycle/icons/icon-192.png",
+                    tag: "luna-period-notification",
+                    requireInteraction: true,
+                  });
+                  localStorage.setItem("luna_notify_shown_date", today.toDateString());
+                } catch (err) {
+                  console.warn("Failed to show notification:", err);
                 }
               }
             }
