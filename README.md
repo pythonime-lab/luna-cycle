@@ -1,8 +1,8 @@
-# Luna — Private Period & Cycle Tracker
+# Her Cycle Keeper — Private Period & Cycle Tracker
 
 > **AES-256-GCM encrypted. Zero data collection. Forever free.**
 
-Luna is a privacy-first period and cycle tracking PWA (Progressive Web App). All data is encrypted locally on your device using AES-256-GCM. **Nothing is sent to any server. No accounts. No analytics. No tracking.**
+Her Cycle Keeper is a privacy-first period and cycle tracking PWA (Progressive Web App). All data is encrypted locally on your device using AES-256-GCM. **Nothing is sent to any server. No accounts. No analytics. No tracking.**
 
 ## Features
 
@@ -17,13 +17,13 @@ Luna is a privacy-first period and cycle tracking PWA (Progressive Web App). All
 
 ## How It Works
 
-Luna uses the **Calendar Rhythm Method** and **Standard Days Method** to estimate:
+Cycle Keeper uses the **Calendar Rhythm Method** and **Standard Days Method** to estimate:
 
 - **Fertile Window** — Days 8 through (cycle length − 11)
 - **Ovulation Day** — Approximately (cycle length − 14) days from period start
 - **Next Period** — Predicted based on your cycle length
 
-**⚠️ Important:** Luna is an educational tool only. It is **not** medical advice and must not be used as a contraceptive or fertility guarantee. Always consult a healthcare professional for medical decisions.
+**⚠️ Important:** Cycle Keeper is an educational tool only. It is **not** medical advice and must not be used as a contraceptive or fertility guarantee. Always consult a healthcare professional for medical decisions.
 
 ## Privacy & Security
 
@@ -37,20 +37,20 @@ Luna uses the **Calendar Rhythm Method** and **Standard Days Method** to estimat
 
 ### Web App (Recommended)
 
-Visit: https://pythonime-lab.github.io/luna-cycle/
+Visit: https://hercyclekeeper.web.app
 
 Then:
 
 1. Click the menu button (⋮) in your browser
 2. Select "Install app" or "Add to Home Screen"
-3. Luna will work like a native app on your device
+3. Cycle Keeper will work like a native app on your device
 
 ### Local Development
 
 ```bash
 # Clone the repository
-git clone https://github.com/pythonime-lab/luna-cycle.git
-cd luna-cycle
+git clone https://github.com/pythonime-lab/hercyclekeeper.git
+cd hercyclekeeper
 
 # Open in browser (requires HTTP/HTTPS for Service Worker)
 # Use a local dev server:
@@ -58,7 +58,7 @@ python -m http.server 8000
 # or
 npx http-server
 
-# Visit: http://localhost:8000/luna-cycle/
+# Visit: http://localhost:8000
 ```
 
 ## Technical Details
@@ -71,7 +71,7 @@ npx http-server
 
 ## Data Structure
 
-Luna stores:
+Cycle Keeper stores:
 
 - Last period start date
 - Cycle length and period duration
@@ -89,7 +89,7 @@ MIT License — See [LICENSE.txt](LICENSE.txt)
 
 **This app provides cycle estimations based on average biological patterns. It is NOT medical advice.**
 
-Luna estimates your cycle using pattern tracking. Actual timing varies due to:
+Cycle Keeper estimates your cycle using pattern tracking. Actual timing varies due to:
 
 - Stress
 - Illness
