@@ -96,6 +96,17 @@
     <script>
       let deferredPrompt = null;
 
+      // Check if app is already installed and hide button
+      if (localStorage.getItem("luna_app_installed") === "true" ||
+          window.matchMedia("(display-mode: standalone)").matches ||
+          window.navigator.standalone === true) {
+        // Running as installed app or previously marked as installed
+        window.addEventListener("DOMContentLoaded", () => {
+          const btn = document.getElementById("install-btn");
+          if (btn) btn.style.display = "none";
+        });
+      }
+
       window.addEventListener("beforeinstallprompt", (e) => {
         console.log(
           "✅ beforeinstallprompt event fired - PWA can be installed"
@@ -107,6 +118,7 @@
       window.addEventListener("appinstalled", () => {
         console.log("✅ App installed successfully");
         deferredPrompt = null;
+        localStorage.setItem("luna_app_installed", "true");
         const btn = document.getElementById("install-btn");
         if (btn) btn.style.display = "none";
       });
@@ -2686,6 +2698,7 @@
             console.log("Install choice:", choiceResult.outcome);
             if (choiceResult.outcome === "accepted") {
               console.log("User accepted the install prompt");
+              localStorage.setItem("luna_app_installed", "true");
               const btn = document.getElementById("install-btn");
               if (btn) btn.style.display = "none";
             } else {
