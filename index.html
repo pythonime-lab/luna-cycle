@@ -2733,21 +2733,21 @@
         };
 
         try {
-          // Try Service Worker first (works on mobile PWAs)
-          if ("serviceWorker" in navigator) {
-            try {
-              const registration = await navigator.serviceWorker.ready;
-              await registration.showNotification(title, options);
-              console.log("Notification shown via Service Worker");
-              return;
-            } catch (err) {
-              console.warn("Service Worker notification failed:", err);
-            }
+          // Try direct API first (simpler and works on web)
+          try {
+            new Notification(title, options);
+            console.log("Notification shown via direct API");
+            return;
+          } catch (err) {
+            console.warn("Direct API failed (expected on mobile):", err.message);
           }
 
-          // Fallback to direct API (works on web)
-          const notification = new Notification(title, options);
-          console.log("Notification shown via direct API");
+          // Fallback to Service Worker (required on mobile PWAs)
+          if ("serviceWorker" in navigator) {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.showNotification(title, options);
+            console.log("Notification shown via Service Worker");
+          }
         } catch (err) {
           console.error("Notification failed:", err);
           showModal({
@@ -2881,33 +2881,34 @@
                 };
 
                 try {
-                  // Try Service Worker first (works on mobile PWAs)
-                  if ("serviceWorker" in navigator) {
-                    try {
-                      const registration = await navigator.serviceWorker.ready;
-                      await registration.showNotification(
-                        "Period Coming Soon",
-                        notifOptions
-                      );
-                      localStorage.setItem(
-                        "luna_notify_shown_date",
-                        today.toDateString()
-                      );
-                      return;
-                    } catch (err) {
-                      console.warn("Service Worker notification failed:", err);
-                    }
+                  // Try direct API first (simpler and works on web)
+                  try {
+                    new Notification("Period Coming Soon", notifOptions);
+                    localStorage.setItem(
+                      "luna_notify_shown_date",
+                      today.toDateString()
+                    );
+                    return;
+                  } catch (err) {
+                    console.warn("Direct API failed (expected on mobile):", err.message);
                   }
 
-                  // Fallback to direct API (works on web)
-                  new Notification("Period Coming Soon", notifOptions);
-                  localStorage.setItem(
-                    "luna_notify_shown_date",
-                    today.toDateString()
-                  );
+                  // Fallback to Service Worker (required on mobile PWAs)
+                  if ("serviceWorker" in navigator) {
+                    const registration = await navigator.serviceWorker.ready;
+                    await registration.showNotification(
+                      "Period Coming Soon",
+                      notifOptions
+                    );
+                    localStorage.setItem(
+                      "luna_notify_shown_date",
+                      today.toDateString()
+                    );
+                  }
                 } catch (err) {
                   console.warn("Failed to show notification:", err);
                 }
+
               }
             }
           }
