@@ -2739,7 +2739,10 @@
             console.log("Notification shown via direct API");
             return;
           } catch (err) {
-            console.warn("Direct API failed (expected on mobile):", err.message);
+            console.warn(
+              "Direct API failed (expected on mobile):",
+              err.message
+            );
           }
 
           // Fallback to Service Worker (required on mobile PWAs)
@@ -2890,7 +2893,10 @@
                     );
                     return;
                   } catch (err) {
-                    console.warn("Direct API failed (expected on mobile):", err.message);
+                    console.warn(
+                      "Direct API failed (expected on mobile):",
+                      err.message
+                    );
                   }
 
                   // Fallback to Service Worker (required on mobile PWAs)
@@ -2908,7 +2914,6 @@
                 } catch (err) {
                   console.warn("Failed to show notification:", err);
                 }
-
               }
             }
           }
