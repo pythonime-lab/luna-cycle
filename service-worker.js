@@ -15,7 +15,7 @@
 
 "use strict";
 
-const CACHE_VERSION = "v1.0.1";
+const CACHE_VERSION = "v2.0.0";
 const CACHE_NAME = `hercyclekeeper-${CACHE_VERSION}`;
 
 // App shell — all files that must be available offline
@@ -47,6 +47,36 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
+  // Network-first strategy for HTML to ensure updates
+  if (
+    event.request.headers.get("accept")?.includes("text/html") ||
+    url.pathname === "/" ||
+    url.pathname === "/index.html"
+  ) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (
+            response &&
+            response.status === 200 &&
+            response.type === "basic"
+          ) {
+            const cloned = response.clone();
+            caches
+              .open(CACHE_NAME)
+              .then((cache) => cache.put(event.request, cloned));
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if network fails
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Cache-first for other assets (CSS, JS, images)
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
