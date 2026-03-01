@@ -2874,7 +2874,10 @@
                     tag: "luna-period-notification",
                     requireInteraction: true,
                   });
-                  localStorage.setItem("luna_notify_shown_date", today.toDateString());
+                  localStorage.setItem(
+                    "luna_notify_shown_date",
+                    today.toDateString()
+                  );
                 } catch (err) {
                   console.warn("Failed to show notification:", err);
                 }
