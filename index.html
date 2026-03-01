@@ -1084,10 +1084,6 @@
           font-size: 0.9375rem;
         }
       }
-
-      .install-btn.hidden {
-        display: none !important;
-      }
     </style>
   </head>
   <body>
@@ -1230,7 +1226,6 @@
         <div class="logo">Luna</div>
         <button
           id="install-btn"
-          class="install-btn hidden"
           onclick="installApp()"
           style="
             background: linear-gradient(135deg, var(--rose), var(--coral));
@@ -2667,11 +2662,7 @@
         console.log("beforeinstallprompt event fired - PWA can be installed");
         e.preventDefault();
         deferredPrompt = e;
-        const btn = document.getElementById("install-btn");
-        if (btn) {
-          btn.classList.remove("hidden");
-          console.log("Install button made visible");
-        }
+        console.log("Install prompt captured and ready");
       });
 
       // Hide install button after successful install
@@ -2679,7 +2670,10 @@
         console.log("App installed successfully");
         deferredPrompt = null;
         const btn = document.getElementById("install-btn");
-        if (btn) btn.classList.add("hidden");
+        if (btn) {
+          btn.style.display = "none";
+          console.log("Install button hidden after installation");
+        }
       });
 
       function installApp() {
@@ -2693,21 +2687,22 @@
             console.log("Install choice:", choiceResult.outcome);
             if (choiceResult.outcome === "accepted") {
               console.log("User accepted the install prompt");
+              const btn = document.getElementById("install-btn");
+              if (btn) btn.style.display = "none";
             } else {
               console.log("User dismissed the install prompt");
             }
             deferredPrompt = null;
-            const btn = document.getElementById("install-btn");
-            if (btn) btn.classList.add("hidden");
           });
         } else {
-          console.error("No install prompt available. Possible reasons:");
-          console.error("- App is already installed");
-          console.error(
-            "- Browser doesn't support PWA install (Safari, Firefox)"
+          console.warn("No deferredPrompt - cannot install. This means:");
+          console.warn("1. beforeinstallprompt event never fired");
+          console.warn(
+            "2. Likely causes: already installed, Safari, Firefox, or not HTTPS"
           );
-          console.error("- App doesn't meet PWA criteria");
-          console.error("- Not on HTTPS");
+          alert(
+            "PWA installation not available in this browser/device configuration."
+          );
         }
       }
       async function testNotification() {
