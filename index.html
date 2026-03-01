@@ -2723,76 +2723,44 @@
         }
 
         const days = state.notificationDaysBefore || 2;
-        const days_text = days > 1 ? "days" : "day";
-        const notifBody = `Your period is expected in ${days} ${days_text}.`;
+        const notifBody = `Your period is expected in ${days} day${
+          days > 1 ? "s" : ""
+        }.`;
 
         try {
-          // Try direct API first (simpler and works on web)
-          try {
-            new Notification("Period Coming Soon", { body: notifBody });
-            console.log("Notification shown via direct API");
-            return;
-          } catch (err) {
-            console.warn(
-              "Direct API failed (expected on mobile):",
-              err.message
-            );
-          }
-
-          // Fallback to Service Worker (required on mobile PWAs)
+          // Use Service Worker if available (works on mobile and web)
           if ("serviceWorker" in navigator) {
             try {
-              console.log("Attempting Service Worker notification...");
               const registration = await navigator.serviceWorker.ready;
-              console.log("SW active:", registration.active);
-              if (registration.active) {
-                await registration.showNotification("Period Coming Soon", {
-                  body: notifBody,
-                });
-                console.log("Notification shown via Service Worker");
-              } else {
-                console.warn("Service Worker not active");
-                showModal({
-                  icon: "⚠️",
-                  title: "Notification Not Ready",
-                  msg: "Service Worker is not active. Please try again.",
-                  cancelText: "",
-                  confirmText: "OK",
-                });
-              }
-            } catch (swErr) {
-              console.error(
-                "Service Worker notification error:",
-                swErr.message,
-                swErr
-              );
-              showModal({
-                icon: "⚠️",
-                title: "Notification Error",
-                msg: swErr.message,
-                cancelText: "",
-                confirmText: "OK",
+              await registration.showNotification("Period Coming Soon", {
+                body: notifBody,
               });
+              console.log("Test notification shown via Service Worker");
+              return;
+            } catch (swErr) {
+              console.warn(
+                "Service Worker failed, trying direct API:",
+                swErr.message
+              );
             }
-          } else {
-            console.warn("Service Worker not available");
+          }
+
+          // Fallback: Try direct API (works on web)
+          try {
+            new Notification("Period Coming Soon", { body: notifBody });
+            console.log("Test notification shown via direct API");
+          } catch (err) {
+            console.error("All notification methods failed:", err.message);
             showModal({
               icon: "⚠️",
-              title: "Not Supported",
-              msg: "Service Worker not available on this browser.",
+              title: "Notification Failed",
+              msg: "Could not display notification: " + err.message,
               cancelText: "",
               confirmText: "OK",
             });
           }
         } catch (err) {
-          console.error("Notification system error:", err);
-          showModal({
-            icon: "⚠️",
-            title: "Error",
-            msg: err.message,
-            cancelText: "",
-            confirmText: "OK",
-          });
+          console.error("Unexpected error:", err);
         }
       }
 
@@ -2910,7 +2878,34 @@
                 const notifBody = `Your period is expected in ${days} ${days_text}.`;
 
                 try {
-                  // Try direct API first (simpler and works on web)
+                  // Use Service Worker if available (works on mobile and web)
+                  if ("serviceWorker" in navigator) {
+                    try {
+                      console.log(
+                        "Attempting Service Worker for scheduled notification..."
+                      );
+                      const registration = await navigator.serviceWorker.ready;
+                      await registration.showNotification(
+                        "Period Coming Soon",
+                        { body: notifBody }
+                      );
+                      localStorage.setItem(
+                        "luna_notify_shown_date",
+                        today.toDateString()
+                      );
+                      console.log(
+                        "Scheduled notification shown via Service Worker"
+                      );
+                      return;
+                    } catch (swErr) {
+                      console.warn(
+                        "Service Worker failed, trying direct API:",
+                        swErr.message
+                      );
+                    }
+                  }
+
+                  // Fallback: Try direct API (works on web)
                   try {
                     new Notification("Period Coming Soon", { body: notifBody });
                     localStorage.setItem(
@@ -2918,46 +2913,10 @@
                       today.toDateString()
                     );
                     console.log("Scheduled notification shown via direct API");
-                    return;
                   } catch (err) {
                     console.warn(
-                      "Direct API failed (expected on mobile):",
+                      "Could not show scheduled notification:",
                       err.message
-                    );
-                  }
-
-                  // Fallback to Service Worker (required on mobile PWAs)
-                  if ("serviceWorker" in navigator) {
-                    try {
-                      console.log(
-                        "Attempting Service Worker for scheduled notification..."
-                      );
-                      const registration = await navigator.serviceWorker.ready;
-                      console.log("SW active:", registration.active);
-                      if (registration.active) {
-                        await registration.showNotification(
-                          "Period Coming Soon",
-                          { body: notifBody }
-                        );
-                        localStorage.setItem(
-                          "luna_notify_shown_date",
-                          today.toDateString()
-                        );
-                        console.log(
-                          "Scheduled notification shown via Service Worker"
-                        );
-                      } else {
-                        console.warn("Service Worker not active");
-                      }
-                    } catch (swErr) {
-                      console.error(
-                        "Service Worker scheduled notification error:",
-                        swErr.message
-                      );
-                    }
-                  } else {
-                    console.warn(
-                      "Service Worker not available for scheduled notification"
                     );
                   }
                 } catch (err) {
