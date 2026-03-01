@@ -853,6 +853,12 @@
         display: block;
         margin-bottom: 0.25rem;
       }
+      #log-flow-icon {
+        display: block;
+        white-space: nowrap;
+        letter-spacing: -0.22em;
+        color: var(--rose);
+      }
       .log-btn:active {
         transform: scale(0.93);
       }
@@ -870,6 +876,53 @@
         border-color: var(--teal);
         background: rgba(45, 212, 191, 0.15);
         color: var(--teal);
+      }
+      .log-btn.mood-btn {
+        grid-column: auto;
+      }
+      .mood-sub {
+        display: block;
+        font-size: 0.6875rem;
+        color: var(--text-muted);
+        margin-top: 0.125rem;
+      }
+      .mood-modal-wrap {
+        margin-top: 0.5rem;
+      }
+      .mood-modal-value {
+        font-size: 0.8125rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-muted);
+      }
+      .mood-modal-slider {
+        width: 100%;
+        cursor: pointer;
+      }
+      .flow-modal-wrap {
+        margin-top: 0.5rem;
+      }
+      .flow-modal-value {
+        font-size: 0.8125rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+        letter-spacing: -0.22em;
+      }
+      .flow-modal-slider {
+        width: 100%;
+        cursor: pointer;
+      }
+      .pain-modal-wrap {
+        margin-top: 0.5rem;
+      }
+      .pain-modal-value {
+        font-size: 0.8125rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-muted);
+      }
+      .pain-modal-slider {
+        width: 100%;
+        cursor: pointer;
       }
       .log-note {
         width: 100%;
@@ -1364,39 +1417,18 @@
         <div class="log-panel" id="log-panel">
           <div class="log-date-title" id="log-panel-date">Log for Today</div>
           <div class="log-options">
-            <div class="log-btn" id="log-flow" onclick="toggleLog('flow')">
-              <span class="icon">🩸</span>Flow
+            <div class="log-btn" id="log-flow" onclick="showFlowModal()">
+              <span class="icon" id="log-flow-icon">🩸</span>Flow
             </div>
-            <div class="log-btn" id="log-cramp" onclick="toggleLog('cramp')">
-              <span class="icon">⚡</span>Cramps
-            </div>
-            <div
-              class="log-btn"
-              id="log-headache"
-              onclick="toggleLog('headache')"
-            >
-              <span class="icon">🤯</span>Headache
+            <div class="log-btn" id="log-headache" onclick="showPainModal()">
+              <span class="icon" id="log-pain-icon">🤕</span>Pain
             </div>
             <div
-              class="log-btn"
-              id="log-bloating"
-              onclick="toggleLog('bloating')"
+              class="log-btn mood-btn"
+              id="log-mood"
+              onclick="showMoodModal()"
             >
-              <span class="icon">💨</span>Bloating
-            </div>
-            <div
-              class="log-btn"
-              id="log-mood-happy"
-              onclick="toggleLog('mood-happy')"
-            >
-              <span class="icon">😊</span>Happy
-            </div>
-            <div
-              class="log-btn"
-              id="log-mood-low"
-              onclick="toggleLog('mood-low')"
-            >
-              <span class="icon">😔</span>Low Mood
+              <span class="icon" id="log-mood-icon">😐</span>Mood
             </div>
           </div>
           <textarea
@@ -1442,6 +1474,65 @@
                 —
               </div>
               <div class="sm">Fertile Days</div>
+            </div>
+          </div>
+        </div>
+        <div class="insight-card">
+          <h3>🤕 Pain Tracking</h3>
+          <div
+            style="
+              margin-bottom: 1rem;
+              display: flex;
+              gap: 0.5rem;
+              align-items: center;
+            "
+          >
+            <button
+              id="pain-view-month"
+              class="apply-btn"
+              onclick="switchPainView('month')"
+              style="
+                flex: 1;
+                padding: 0.5rem;
+                font-size: 0.875rem;
+                background: linear-gradient(135deg, var(--rose), var(--coral));
+              "
+            >
+              This Month
+            </button>
+            <button
+              id="pain-view-year"
+              class="apply-btn"
+              onclick="switchPainView('year')"
+              style="
+                flex: 1;
+                padding: 0.5rem;
+                font-size: 0.875rem;
+                background: rgba(255, 255, 255, 0.1);
+              "
+            >
+              This Year
+            </button>
+          </div>
+          <div id="pain-chart-container">
+            <canvas
+              id="pain-chart"
+              style="width: 100%; max-height: 300px"
+            ></canvas>
+          </div>
+          <div
+            style="
+              margin-top: 1rem;
+              font-size: 0.75rem;
+              color: var(--text-muted);
+            "
+          >
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap">
+              <span style="color: #ff3d6b">▮ Period</span>
+              <span style="color: #ffd700">▮ Ovulation</span>
+              <span style="color: #ff3d6b">▮ Flow</span>
+              <span style="color: #ff6b4a">▮ Pain</span>
+              <span style="color: #8b7fe8">▮ Mood (Low → Happy)</span>
             </div>
           </div>
         </div>
@@ -2237,6 +2328,407 @@
         if (ta && el) el.textContent = `${ta.value.length} / 500`;
       }
 
+      let currentFlowValue = 1;
+      let currentFlowSet = false;
+      let currentMoodValue = 50;
+      let currentMoodSet = false;
+      let currentPainValue = 5;
+      let currentPainSet = false;
+
+      function normalizeFlowValue(value, fallback = 1) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return fallback;
+        return Math.max(1, Math.min(3, Math.round(n)));
+      }
+
+      function getFlowValueFromLog(log) {
+        if (!log) return null;
+        if (typeof log.flow === "number" && Number.isFinite(log.flow)) {
+          return normalizeFlowValue(log.flow, 1);
+        }
+        if (log.flow === true) return 1;
+        return null;
+      }
+
+      function flowIconFromValue(value) {
+        const v = normalizeFlowValue(value, 1);
+        if (v === 1) return "🩸";
+        if (v === 2) return "🩸🩸";
+        return "🩸🩸🩸";
+      }
+
+      function flowLabelFromValue(value) {
+        const v = normalizeFlowValue(value, 1);
+        if (v === 1) return "🩸";
+        if (v === 2) return "🩸🩸";
+        return "🩸🩸🩸";
+      }
+
+      function updateFlowButtonVisual(value, isSet = true) {
+        const v = normalizeFlowValue(value, 1);
+        currentFlowValue = v;
+        currentFlowSet = isSet;
+
+        const flowBtn = document.getElementById("log-flow");
+        const flowIcon = document.getElementById("log-flow-icon");
+
+        if (flowBtn) {
+          if (isSet) {
+            flowBtn.classList.add("active-flow");
+            flowBtn.style.borderColor = "";
+            flowBtn.style.background = "";
+            flowBtn.style.color = "";
+          } else {
+            flowBtn.classList.remove("active-flow");
+            flowBtn.style.borderColor = "";
+            flowBtn.style.background = "";
+            flowBtn.style.color = "";
+          }
+        }
+        if (flowIcon) flowIcon.textContent = flowIconFromValue(v);
+      }
+
+      function updateFlowModalPreview(value) {
+        const slider = document.getElementById("flow-modal-slider");
+        const label = document.getElementById("flow-modal-value");
+        if (!slider || !label) return;
+        const v = normalizeFlowValue(value, 1);
+        slider.style.accentColor = "#FF3D6B";
+        label.textContent = flowLabelFromValue(v);
+        label.style.color = "var(--rose)";
+        label.style.whiteSpace = "nowrap";
+        label.style.letterSpacing = "-0.22em";
+        label.style.lineHeight = "1";
+      }
+
+      function showFlowModal() {
+        const overlay = document.getElementById("modal-overlay");
+        const iconEl = document.getElementById("modal-icon");
+        const titleEl = document.getElementById("modal-title");
+        const msgEl = document.getElementById("modal-msg");
+        const confirmBtn = document.getElementById("modal-confirm");
+        const cancelBtn = document.getElementById("modal-cancel");
+
+        if (
+          !overlay ||
+          !iconEl ||
+          !titleEl ||
+          !msgEl ||
+          !confirmBtn ||
+          !cancelBtn
+        )
+          return;
+
+        iconEl.textContent = "🩸";
+        titleEl.textContent = "Set Flow";
+        msgEl.textContent = "";
+
+        const wrap = document.createElement("div");
+        wrap.className = "flow-modal-wrap";
+        const valueEl = document.createElement("div");
+        valueEl.id = "flow-modal-value";
+        valueEl.className = "flow-modal-value";
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "1";
+        slider.max = "3";
+        slider.step = "1";
+        slider.value = String(currentFlowValue);
+        slider.id = "flow-modal-slider";
+        slider.className = "flow-modal-slider";
+        slider.addEventListener("input", (e) =>
+          updateFlowModalPreview(e.target.value)
+        );
+        wrap.appendChild(valueEl);
+        wrap.appendChild(slider);
+        msgEl.appendChild(wrap);
+
+        confirmBtn.textContent = "Save";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.style.display = "";
+
+        updateFlowModalPreview(currentFlowValue);
+
+        confirmBtn.onclick = () => {
+          const v = normalizeFlowValue(slider.value, 1);
+          updateFlowButtonVisual(v, true);
+          overlay.classList.remove("visible");
+        };
+        cancelBtn.onclick = () => {
+          overlay.classList.remove("visible");
+        };
+
+        overlay.classList.add("visible");
+      }
+
+      function normalizePainValue(value, fallback = 5) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return fallback;
+        const clamped = Math.max(1, Math.min(10, n));
+        return Math.round(clamped * 2) / 2;
+      }
+
+      function getPainValueFromLog(log) {
+        if (!log) return null;
+        if (typeof log.pain === "number" && Number.isFinite(log.pain)) {
+          return normalizePainValue(log.pain, 5);
+        }
+        if (typeof log.headache === "number" && Number.isFinite(log.headache)) {
+          return normalizePainValue(log.headache, 5);
+        }
+        if (log.headache === true) return 5;
+        return null;
+      }
+
+      function painColorFromValue(value) {
+        const v = normalizePainValue(value, 5);
+        const t = (v - 1) / 9;
+        const low = { r: 255, g: 179, b: 71 }; // #FFB347
+        const high = { r: 255, g: 61, b: 107 }; // #FF3D6B
+        const r = Math.round(low.r + (high.r - low.r) * t);
+        const g = Math.round(low.g + (high.g - low.g) * t);
+        const b = Math.round(low.b + (high.b - low.b) * t);
+        return `rgb(${r}, ${g}, ${b})`;
+      }
+
+      function painLabelFromValue(value) {
+        const v = normalizePainValue(value, 5);
+        return `Pain ${v.toFixed(1)} / 10`;
+      }
+
+      function updatePainButtonVisual(value, isSet = true) {
+        const v = normalizePainValue(value, 5);
+        currentPainValue = v;
+        currentPainSet = isSet;
+
+        const painBtn = document.getElementById("log-headache");
+        const painIcon = document.getElementById("log-pain-icon");
+        const col = painColorFromValue(v);
+
+        if (painBtn) {
+          if (isSet) {
+            painBtn.classList.add("active-symptom");
+            painBtn.style.borderColor = col;
+            painBtn.style.background = "rgba(255, 255, 255, 0.06)";
+            painBtn.style.color = col;
+          } else {
+            painBtn.classList.remove("active-symptom");
+            painBtn.style.borderColor = "";
+            painBtn.style.background = "";
+            painBtn.style.color = "";
+          }
+        }
+        if (painIcon) painIcon.textContent = "🤕";
+      }
+
+      function updatePainModalPreview(value) {
+        const slider = document.getElementById("pain-modal-slider");
+        const label = document.getElementById("pain-modal-value");
+        if (!slider || !label) return;
+        const v = normalizePainValue(value, 5);
+        const col = painColorFromValue(v);
+        slider.style.accentColor = col;
+        label.textContent = painLabelFromValue(v);
+        label.style.color = col;
+      }
+
+      function showPainModal() {
+        const overlay = document.getElementById("modal-overlay");
+        const iconEl = document.getElementById("modal-icon");
+        const titleEl = document.getElementById("modal-title");
+        const msgEl = document.getElementById("modal-msg");
+        const confirmBtn = document.getElementById("modal-confirm");
+        const cancelBtn = document.getElementById("modal-cancel");
+
+        if (
+          !overlay ||
+          !iconEl ||
+          !titleEl ||
+          !msgEl ||
+          !confirmBtn ||
+          !cancelBtn
+        )
+          return;
+
+        iconEl.textContent = "🤕";
+        titleEl.textContent = "Set Pain";
+        msgEl.textContent = "";
+
+        const wrap = document.createElement("div");
+        wrap.className = "pain-modal-wrap";
+        const valueEl = document.createElement("div");
+        valueEl.id = "pain-modal-value";
+        valueEl.className = "pain-modal-value";
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "1";
+        slider.max = "10";
+        slider.step = "0.5";
+        slider.value = String(currentPainValue);
+        slider.id = "pain-modal-slider";
+        slider.className = "pain-modal-slider";
+        slider.addEventListener("input", (e) =>
+          updatePainModalPreview(e.target.value)
+        );
+        wrap.appendChild(valueEl);
+        wrap.appendChild(slider);
+        msgEl.appendChild(wrap);
+
+        confirmBtn.textContent = "Save";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.style.display = "";
+
+        updatePainModalPreview(currentPainValue);
+
+        confirmBtn.onclick = () => {
+          const v = normalizePainValue(slider.value, 5);
+          updatePainButtonVisual(v, true);
+          overlay.classList.remove("visible");
+        };
+        cancelBtn.onclick = () => {
+          overlay.classList.remove("visible");
+        };
+
+        overlay.classList.add("visible");
+      }
+
+      function normalizeMoodValue(value, fallback = 50) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return fallback;
+        return Math.max(0, Math.min(100, n));
+      }
+
+      function getMoodValueFromLog(log) {
+        if (!log) return null;
+        if (typeof log.mood === "number" && Number.isFinite(log.mood)) {
+          return Math.max(0, Math.min(100, log.mood));
+        }
+        if (log["mood-happy"] && !log["mood-low"]) return 100;
+        if (log["mood-low"] && !log["mood-happy"]) return 0;
+        if (log["mood-happy"] && log["mood-low"]) return 50;
+        return null;
+      }
+
+      function moodColorFromValue(value) {
+        const v = normalizeMoodValue(value, 50);
+        const t = v / 100;
+        const low = { r: 139, g: 127, b: 232 }; // #8B7FE8
+        const high = { r: 46, g: 204, b: 113 }; // #2ECC71
+        const r = Math.round(low.r + (high.r - low.r) * t);
+        const g = Math.round(low.g + (high.g - low.g) * t);
+        const b = Math.round(low.b + (high.b - low.b) * t);
+        return `rgb(${r}, ${g}, ${b})`;
+      }
+
+      function moodLabelFromValue(value) {
+        const v = normalizeMoodValue(value, 50);
+        if (v < 35) return "Low Mood";
+        if (v > 65) return "Happy";
+        return "Neutral";
+      }
+
+      function moodIconFromValue(value) {
+        const v = normalizeMoodValue(value, 50);
+        if (v < 35) return "😔";
+        if (v > 65) return "😊";
+        return "😐";
+      }
+
+      function updateMoodButtonVisual(value, isSet = true) {
+        const v = normalizeMoodValue(value, 50);
+        currentMoodValue = v;
+        currentMoodSet = isSet;
+
+        const moodBtn = document.getElementById("log-mood");
+        const moodIcon = document.getElementById("log-mood-icon");
+        const col = moodColorFromValue(v);
+
+        if (moodBtn) {
+          if (isSet) {
+            moodBtn.classList.add("active-mood");
+            moodBtn.style.borderColor = col;
+            moodBtn.style.background = "rgba(255, 255, 255, 0.06)";
+            moodBtn.style.color = col;
+          } else {
+            moodBtn.classList.remove("active-mood");
+            moodBtn.style.borderColor = "";
+            moodBtn.style.background = "";
+            moodBtn.style.color = "";
+          }
+        }
+        if (moodIcon) moodIcon.textContent = "😐";
+      }
+
+      function updateMoodModalPreview(value) {
+        const slider = document.getElementById("mood-modal-slider");
+        const label = document.getElementById("mood-modal-value");
+        if (!slider || !label) return;
+        const v = normalizeMoodValue(value, 50);
+        const col = moodColorFromValue(v);
+        slider.style.accentColor = col;
+        label.textContent = moodLabelFromValue(v);
+        label.style.color = col;
+      }
+
+      function showMoodModal() {
+        const overlay = document.getElementById("modal-overlay");
+        const iconEl = document.getElementById("modal-icon");
+        const titleEl = document.getElementById("modal-title");
+        const msgEl = document.getElementById("modal-msg");
+        const confirmBtn = document.getElementById("modal-confirm");
+        const cancelBtn = document.getElementById("modal-cancel");
+
+        if (
+          !overlay ||
+          !iconEl ||
+          !titleEl ||
+          !msgEl ||
+          !confirmBtn ||
+          !cancelBtn
+        )
+          return;
+
+        iconEl.textContent = "🎚️";
+        titleEl.textContent = "Set Mood";
+        msgEl.textContent = "";
+
+        const wrap = document.createElement("div");
+        wrap.className = "mood-modal-wrap";
+        const valueEl = document.createElement("div");
+        valueEl.id = "mood-modal-value";
+        valueEl.className = "mood-modal-value";
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "0";
+        slider.max = "100";
+        slider.value = String(currentMoodValue);
+        slider.id = "mood-modal-slider";
+        slider.className = "mood-modal-slider";
+        slider.addEventListener("input", (e) =>
+          updateMoodModalPreview(e.target.value)
+        );
+        wrap.appendChild(valueEl);
+        wrap.appendChild(slider);
+        msgEl.appendChild(wrap);
+
+        confirmBtn.textContent = "Save";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.style.display = "";
+
+        updateMoodModalPreview(currentMoodValue);
+
+        confirmBtn.onclick = () => {
+          const v = normalizeMoodValue(slider.value, 50);
+          updateMoodButtonVisual(v, true);
+          overlay.classList.remove("visible");
+        };
+        cancelBtn.onclick = () => {
+          overlay.classList.remove("visible");
+        };
+
+        overlay.classList.add("visible");
+      }
+
       function updateStatusCard() {
         const info = getCycleInfo();
         if (!info) return;
@@ -2366,6 +2858,276 @@
             row.appendChild(lenSpan);
             hist.appendChild(row);
           });
+
+        renderPainChart();
+      }
+
+      let painViewMode = "month";
+
+      function switchPainView(mode) {
+        painViewMode = mode;
+        const monthBtn = document.getElementById("pain-view-month");
+        const yearBtn = document.getElementById("pain-view-year");
+
+        if (mode === "month") {
+          monthBtn.style.background =
+            "linear-gradient(135deg, var(--rose), var(--coral))";
+          yearBtn.style.background = "rgba(255, 255, 255, 0.1)";
+        } else {
+          monthBtn.style.background = "rgba(255, 255, 255, 0.1)";
+          yearBtn.style.background =
+            "linear-gradient(135deg, var(--rose), var(--coral))";
+        }
+
+        renderPainChart();
+      }
+
+      function renderPainChart() {
+        const canvas = document.getElementById("pain-chart");
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        const container = canvas.parentElement;
+        const rect = container.getBoundingClientRect();
+
+        // If canvas is hidden or no width, skip rendering
+        if (rect.width === 0) {
+          setTimeout(() => renderPainChart(), 100);
+          return;
+        }
+
+        const dpr = window.devicePixelRatio || 1;
+        const width = rect.width;
+        const height = 300;
+
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        canvas.style.width = width + "px";
+        canvas.style.height = height + "px";
+        ctx.scale(dpr, dpr);
+
+        const padding = { top: 20, right: 20, bottom: 40, left: 40 };
+        const chartWidth = width - padding.left - padding.right;
+        const chartHeight = height - padding.top - padding.bottom;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+
+        // Get data based on view mode
+        const data =
+          painViewMode === "month" ? getPainDataMonth() : getPainDataYear();
+
+        if (data.length === 0) {
+          ctx.fillStyle = "#666";
+          ctx.font = "14px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("No tracking data logged yet", width / 2, height / 2);
+          return;
+        }
+
+        // Draw grid lines
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 4; i++) {
+          const y = padding.top + (chartHeight / 4) * i;
+          ctx.beginPath();
+          ctx.moveTo(padding.left, y);
+          ctx.lineTo(padding.left + chartWidth, y);
+          ctx.stroke();
+        }
+
+        // Draw axes
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, padding.top);
+        ctx.lineTo(padding.left, padding.top + chartHeight);
+        ctx.lineTo(padding.left + chartWidth, padding.top + chartHeight);
+        ctx.stroke();
+
+        // Draw bars and markers
+        const barWidth = chartWidth / data.length;
+
+        data.forEach((point, i) => {
+          const x = padding.left + i * barWidth + barWidth / 2;
+          const baseY = padding.top + chartHeight;
+
+          // Draw period background
+          if (point.isPeriod) {
+            ctx.fillStyle = "rgba(255, 61, 107, 0.15)";
+            ctx.fillRect(
+              padding.left + i * barWidth,
+              padding.top,
+              barWidth,
+              chartHeight
+            );
+          }
+
+          // Draw ovulation marker
+          if (point.isOvulation) {
+            ctx.fillStyle = "rgba(255, 215, 0, 0.3)";
+            ctx.fillRect(
+              padding.left + i * barWidth,
+              padding.top,
+              barWidth,
+              chartHeight
+            );
+          }
+
+          // Draw symptom bars
+          const symptoms = [];
+          if (point.hasFlow)
+            symptoms.push({
+              color: "#FF3D6B",
+              intensity: point.flowIntensity || 1,
+            });
+          if (point.hasPain)
+            symptoms.push({
+              color: "#FF6B4A",
+              intensity: point.painIntensity || 1,
+            });
+          if (point.hasMood)
+            symptoms.push({
+              color: moodColorFromValue(point.moodValue),
+              intensity: point.moodIntensity,
+            });
+
+          if (symptoms.length > 0) {
+            const segmentWidth = (barWidth * 0.7) / symptoms.length;
+            const startX = padding.left + i * barWidth + barWidth * 0.15;
+
+            symptoms.forEach((symptom, idx) => {
+              ctx.fillStyle = symptom.color;
+              const barHeight = chartHeight * 0.8 * symptom.intensity;
+              ctx.fillRect(
+                startX + idx * segmentWidth,
+                baseY - barHeight,
+                segmentWidth * 0.9,
+                barHeight
+              );
+            });
+          }
+        });
+
+        // Draw labels
+        ctx.fillStyle = "#999";
+        ctx.font = "11px sans-serif";
+        ctx.textAlign = "center";
+
+        const labelStep = painViewMode === "month" ? 5 : 1;
+        data.forEach((point, i) => {
+          if (i % labelStep === 0 || i === data.length - 1) {
+            const x = padding.left + i * barWidth + barWidth / 2;
+            ctx.fillText(point.label, x, padding.top + chartHeight + 20);
+          }
+        });
+      }
+
+      function getPainDataMonth() {
+        const data = [];
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        const info = getCycleInfo();
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `${year}-${String(month + 1).padStart(
+            2,
+            "0"
+          )}-${String(d).padStart(2, "0")}`;
+          const dayType = getDayType(dateStr);
+          const log = state.logs[dateStr] || {};
+          const flowValue = getFlowValueFromLog(log);
+          const painValue = getPainValueFromLog(log);
+          const moodValue = getMoodValueFromLog(log);
+
+          data.push({
+            label: String(d),
+            hasFlow: flowValue !== null,
+            flowIntensity: flowValue === null ? 0 : flowValue / 3,
+            hasPain: painValue !== null,
+            painIntensity: painValue === null ? 0 : painValue / 10,
+            hasMood: moodValue !== null,
+            moodValue,
+            moodIntensity:
+              moodValue === null
+                ? 0
+                : 0.4 + (Math.abs(moodValue - 50) / 50) * 0.6,
+            isPeriod: dayType.includes("period"),
+            isOvulation: dayType === "ovulation",
+          });
+        }
+
+        return data;
+      }
+
+      function getPainDataYear() {
+        const data = [];
+        const now = new Date();
+        const year = now.getFullYear();
+
+        for (let m = 0; m < 12; m++) {
+          const monthStart = new Date(year, m, 1);
+          const monthEnd = new Date(year, m + 1, 0);
+
+          let flowSum = 0;
+          let flowCount = 0;
+          let painSum = 0;
+          let painCount = 0;
+          let moodSum = 0;
+          let moodCount = 0;
+          let periodDays = 0;
+          let totalDays = monthEnd.getDate();
+
+          for (let d = 1; d <= totalDays; d++) {
+            const dateStr = `${year}-${String(m + 1).padStart(2, "0")}-${String(
+              d
+            ).padStart(2, "0")}`;
+            const log = state.logs[dateStr] || {};
+            const dayType = getDayType(dateStr);
+            const flowValue = getFlowValueFromLog(log);
+            const painValue = getPainValueFromLog(log);
+            const moodValue = getMoodValueFromLog(log);
+
+            if (flowValue !== null) {
+              flowSum += flowValue;
+              flowCount++;
+            }
+            if (painValue !== null) {
+              painSum += painValue;
+              painCount++;
+            }
+            if (moodValue !== null) {
+              moodSum += moodValue;
+              moodCount++;
+            }
+            if (dayType.includes("period")) periodDays++;
+          }
+
+          const avgFlow = flowCount > 0 ? flowSum / flowCount : null;
+          const avgPain = painCount > 0 ? painSum / painCount : null;
+          const avgMood = moodCount > 0 ? moodSum / moodCount : null;
+
+          data.push({
+            label: monthStart.toLocaleString("default", { month: "short" }),
+            hasFlow: flowCount > 0,
+            hasPain: painCount > 0,
+            hasMood: moodCount > 0,
+            flowValue: avgFlow,
+            painValue: avgPain,
+            moodValue: avgMood,
+            flowIntensity: avgFlow === null ? 0 : avgFlow / 3,
+            painIntensity: avgPain === null ? 0 : avgPain / 10,
+            moodIntensity:
+              avgMood === null ? 0 : 0.4 + (Math.abs(avgMood - 50) / 50) * 0.6,
+            isPeriod: periodDays > 0,
+            isOvulation: false,
+          });
+        }
+
+        return data;
       }
 
       function renderCalendar() {
@@ -2439,26 +3201,24 @@
           });
 
         const log = state.logs[dateStr] || {};
-        [
-          "flow",
-          "cramp",
-          "headache",
-          "bloating",
-          "mood-happy",
-          "mood-low",
-        ].forEach((k) => {
-          const el = document.getElementById("log-" + k);
-          if (!el) return;
-          el.classList.remove("active-flow", "active-symptom", "active-mood");
-          if (log[k])
-            el.classList.add(
-              k === "flow"
-                ? "active-flow"
-                : k.startsWith("mood")
-                ? "active-mood"
-                : "active-symptom"
-            );
-        });
+        const flowValue = getFlowValueFromLog(log);
+        updateFlowButtonVisual(
+          flowValue === null ? 1 : flowValue,
+          flowValue !== null
+        );
+
+        const painValue = getPainValueFromLog(log);
+        updatePainButtonVisual(
+          painValue === null ? 5 : painValue,
+          painValue !== null
+        );
+
+        const moodValue = getMoodValueFromLog(log);
+        updateMoodButtonVisual(
+          moodValue === null ? 50 : moodValue,
+          moodValue !== null
+        );
+
         // Safe value — textContent for note
         const noteEl = document.getElementById("log-note");
         noteEl.value = (log.note || "").slice(0, 500);
@@ -2467,46 +3227,28 @@
       }
 
       function toggleLog(key) {
-        const allowed = [
-          "flow",
-          "cramp",
-          "headache",
-          "bloating",
-          "mood-happy",
-          "mood-low",
-        ];
+        const allowed = ["flow"];
         if (!allowed.includes(key)) return;
         const el = document.getElementById("log-" + key);
-        const ac =
-          key === "flow"
-            ? "active-flow"
-            : key.startsWith("mood")
-            ? "active-mood"
-            : "active-symptom";
-        el.classList.toggle(ac);
+        if (!el) return;
+        el.classList.toggle("active-flow");
       }
 
       async function saveLog() {
         if (!selectedDate || !/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) return;
         const log = {};
-        [
-          "flow",
-          "cramp",
-          "headache",
-          "bloating",
-          "mood-happy",
-          "mood-low",
-        ].forEach((k) => {
-          const el = document.getElementById("log-" + k);
-          if (
-            el &&
-            (el.classList.contains("active-flow") ||
-              el.classList.contains("active-symptom") ||
-              el.classList.contains("active-mood"))
-          ) {
-            log[k] = true;
-          }
-        });
+        if (currentFlowSet) {
+          log.flow = normalizeFlowValue(currentFlowValue, 1);
+        }
+
+        if (currentPainSet) {
+          log.pain = normalizePainValue(currentPainValue, 5);
+        }
+
+        if (currentMoodSet) {
+          log.mood = normalizeMoodValue(currentMoodValue, 50);
+        }
+
         const rawNote = document.getElementById("log-note").value;
         log.note = rawNote.slice(0, 500).replace(/[<>]/g, ""); // strip < > as extra guard
 
@@ -3005,6 +3747,10 @@
           document.getElementById("lock-screen").classList.add("hidden");
           document.getElementById("onboarding").classList.remove("hidden");
         }
+
+        updateFlowButtonVisual(1, false);
+        updatePainButtonVisual(5, false);
+        updateMoodButtonVisual(50, false);
       }
 
       init();
