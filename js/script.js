@@ -1,8 +1,8 @@
 "use strict";
 
 // Import modular utilities
-import { toISO, fromISO, addDays, diffDays, today } from "./js/dateUtils.js";
-import { deriveKey, encryptData, decryptData, hashPin } from "./js/crypto.js";
+import { toISO, fromISO, addDays, diffDays, today } from "./dateUtils.js";
+import { deriveKey, encryptData, decryptData, hashPin } from "./crypto.js";
 import {
   resetSessionTimer,
   startCountdown,
@@ -26,13 +26,14 @@ import {
   getManualPeriodRange,
   isPredictedFuturePeriod,
   setState as setCyclesState,
-} from "./js/cycles.js";
+} from "./cycles.js";
+import { initKeyboardNavigation, setNavigationState } from "./navigation.js";
 import {
   cleanupConsecutiveMarkers,
   cleanupEmptyLogs,
   recalculateCycleFromMarkers,
   setState as setPeriodMarkingState,
-} from "./js/periodMarking.js";
+} from "./periodMarking.js";
 
 const STORE_KEY = "yourcyclekeeper_enc_v1"; // encrypted blob
 const SALT_KEY = "yourcyclekeeper_salt_v1"; // random salt (not secret)
@@ -77,46 +78,6 @@ let sessionPin = null; // PIN held only in JS memory (never persisted)
 let viewMonth = new Date();
 let selectedDate = null;
 let currentTab = "calendar";
-
-const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-const WARN_AT_MS = SESSION_TIMEOUT_MS - 60000; // warn at 4 min
-let sessionTimer = null;
-let warnTimer = null;
-let lastActivity = Date.now();
-
-function resetSessionTimer() {
-  lastActivity = Date.now();
-  clearTimeout(sessionTimer);
-  clearTimeout(warnTimer);
-  hideBanner();
-  warnTimer = setTimeout(() => {
-    document.getElementById("timeout-banner").classList.add("visible");
-    startCountdown(60);
-  }, WARN_AT_MS);
-  sessionTimer = setTimeout(() => {
-    lockApp();
-  }, SESSION_TIMEOUT_MS);
-}
-
-let countdownInterval = null;
-function startCountdown(seconds) {
-  clearInterval(countdownInterval);
-  let s = seconds;
-  const countEl = document.getElementById("timeout-count");
-  if (!countEl) return;
-  countEl.textContent = s;
-  countdownInterval = setInterval(() => {
-    s--;
-    if (countEl) countEl.textContent = s;
-    if (s <= 0) clearInterval(countdownInterval);
-  }, 1000);
-}
-
-function hideBanner() {
-  const bannerEl = document.getElementById("timeout-banner");
-  if (bannerEl) bannerEl.classList.remove("visible");
-  clearInterval(countdownInterval);
-}
 
 // Reset on any user interaction (deferred until DOM ready)
 function setupEventListeners() {
@@ -166,6 +127,14 @@ function showModal({
     overlay.classList.remove("visible");
     onCancel && onCancel();
   };
+
+  // Move focus into modal immediately (accessibility standard)
+  setTimeout(() => {
+    const focusTarget = cancelText ? cancelBtn : confirmBtn;
+    if (focusTarget) {
+      focusTarget.focus();
+    }
+  }, 0);
 }
 
 let pinBuffer = "";
@@ -248,6 +217,9 @@ async function submitPin() {
     if (blob) {
       try {
         state = await decryptData(blob, pin, salt);
+        // Re-initialize module state references after loading encrypted data
+        setCyclesState(state);
+        setPeriodMarkingState(state);
       } catch {
         document.getElementById("lock-error").textContent =
           "Decryption failed. Data may be corrupted.";
@@ -280,18 +252,19 @@ function lockApp() {
     logs: {},
     cycleHistory: [],
   };
-  clearTimeout(sessionTimer);
-  clearTimeout(warnTimer);
-  clearInterval(countdownInterval);
   hideBanner();
   document.getElementById("app").style.display = "none";
   document.getElementById("bottom-nav").style.display = "none";
   document.getElementById("lock-screen").classList.remove("hidden");
-  document.getElementById("log-panel").classList.remove("visible");
+  const logModal = document.getElementById("log-modal-overlay");
+  if (logModal) logModal.classList.remove("visible");
   pinBuffer = "";
   updatePinDots("");
   document.getElementById("lock-error").textContent = "";
 }
+
+// Initialize session module with lockApp function
+setLockApp(lockApp);
 
 async function forgotPinFlow() {
   showModal({
@@ -518,6 +491,26 @@ async function deleteLog() {
 async function togglePeriodStart() {
   if (!selectedDate || !/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) return;
 
+  // Check if date is too far in the past
+  const selectedD = fromISO(selectedDate);
+  const todayD = fromISO(today());
+  const daysDiff = diffDays(selectedD, todayD);
+
+  if (daysDiff > 7) {
+    showModal({
+      icon: "📅",
+      title: "Set Past Period",
+      msg: "To set periods from more than a week ago, please use Cycle Settings for accurate predictions.",
+      confirmText: "Go to Settings",
+      cancelText: "Cancel",
+      onConfirm: () => {
+        closeLogPanel();
+        switchTab("settings");
+      },
+    });
+    return;
+  }
+
   const log = state.logs[selectedDate] || {};
   log.periodStart = !log.periodStart;
 
@@ -551,6 +544,26 @@ async function togglePeriodStart() {
 
 async function togglePeriodEnd() {
   if (!selectedDate || !/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) return;
+
+  // Check if date is too far in the past
+  const selectedD = fromISO(selectedDate);
+  const todayD = fromISO(today());
+  const daysDiff = diffDays(selectedD, todayD);
+
+  if (daysDiff > 7) {
+    showModal({
+      icon: "📅",
+      title: "Set Past Period",
+      msg: "To set periods from more than a week ago, please use Cycle Settings for accurate predictions.",
+      confirmText: "Go to Settings",
+      cancelText: "Cancel",
+      onConfirm: () => {
+        closeLogPanel();
+        switchTab("settings");
+      },
+    });
+    return;
+  }
 
   const log = state.logs[selectedDate] || {};
   const wasSet = log.periodEnd;
@@ -606,21 +619,6 @@ function updatePeriodButtonVisuals() {
       endBtn.classList.remove("active");
     }
   }
-}
-
-function normalizeFlowValue(value, fallback = 1) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.max(1, Math.min(3, Math.round(n)));
-}
-
-function getFlowValueFromLog(log) {
-  if (!log) return null;
-  if (typeof log.flow === "number" && Number.isFinite(log.flow)) {
-    return normalizeFlowValue(log.flow, 1);
-  }
-  if (log.flow === true) return 1;
-  return null;
 }
 
 function flowIconFromValue(value) {
@@ -726,25 +724,13 @@ function showFlowModal() {
   };
 
   overlay.classList.add("visible");
-}
 
-function normalizePainValue(value, fallback = 5) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return fallback;
-  const clamped = Math.max(1, Math.min(10, n));
-  return Math.round(clamped * 2) / 2;
-}
-
-function getPainValueFromLog(log) {
-  if (!log) return null;
-  if (typeof log.pain === "number" && Number.isFinite(log.pain)) {
-    return normalizePainValue(log.pain, 5);
-  }
-  if (typeof log.headache === "number" && Number.isFinite(log.headache)) {
-    return normalizePainValue(log.headache, 5);
-  }
-  if (log.headache === true) return 5;
-  return null;
+  // Move focus to slider immediately
+  setTimeout(() => {
+    if (slider) {
+      slider.focus();
+    }
+  }, 0);
 }
 
 function painColorFromValue(value) {
@@ -851,23 +837,13 @@ function showPainModal() {
   };
 
   overlay.classList.add("visible");
-}
 
-function normalizeMoodValue(value, fallback = 50) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.max(0, Math.min(100, n));
-}
-
-function getMoodValueFromLog(log) {
-  if (!log) return null;
-  if (typeof log.mood === "number" && Number.isFinite(log.mood)) {
-    return Math.max(0, Math.min(100, log.mood));
-  }
-  if (log["mood-happy"] && !log["mood-low"]) return 100;
-  if (log["mood-low"] && !log["mood-happy"]) return 0;
-  if (log["mood-happy"] && log["mood-low"]) return 50;
-  return null;
+  // Move focus to slider immediately
+  setTimeout(() => {
+    if (slider) {
+      slider.focus();
+    }
+  }, 0);
 }
 
 function moodColorFromValue(value) {
@@ -1003,6 +979,13 @@ function showMoodModal() {
   };
 
   overlay.classList.add("visible");
+
+  // Move focus to slider immediately
+  setTimeout(() => {
+    if (slider) {
+      slider.focus();
+    }
+  }, 0);
 }
 
 function updateStatusCard() {
@@ -1513,13 +1496,15 @@ function downloadChart() {
       periodLabel = `${monthName} ${selectedYear}`;
     }
 
-    // Create a new canvas with header
-    const headerHeight = 80;
+    // Create a new canvas with header and footer
+    const headerHeight = 100;
+    const footerHeight = 40;
     const exportCanvas = document.createElement("canvas");
     const dpr = window.devicePixelRatio || 1;
 
     exportCanvas.width = originalCanvas.width;
-    exportCanvas.height = originalCanvas.height + headerHeight * dpr;
+    exportCanvas.height =
+      originalCanvas.height + (headerHeight + footerHeight) * dpr;
 
     const ctx = exportCanvas.getContext("2d");
 
@@ -1527,36 +1512,118 @@ function downloadChart() {
     ctx.fillStyle = "#1a1a1a";
     ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
 
-    // Draw title
-    ctx.fillStyle = "#fff";
-    ctx.font = `bold ${24 * dpr}px sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText("Cycle Tracking", exportCanvas.width / 2, 30 * dpr);
+    // Load and draw logo
+    const logo = new Image();
+    logo.src = "icons/your_cycle_keeper_logo.png";
+    logo.onload = () => {
+      // Draw logo (centered at top)
+      const logoSize = 32 * dpr;
+      const centerX = exportCanvas.width / 2;
+      ctx.drawImage(logo, centerX - logoSize / 2, 20 * dpr, logoSize, logoSize);
 
-    // Draw period label
-    ctx.font = `${16 * dpr}px sans-serif`;
-    ctx.fillStyle = "#999";
-    ctx.fillText(periodLabel, exportCanvas.width / 2, 55 * dpr);
+      // Draw "Your Cycle Keeper" text below logo
+      ctx.fillStyle = "#A78BFA";
+      ctx.font = `${16 * dpr}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText("Your Cycle Keeper", centerX, 70 * dpr);
 
-    // Draw original chart
-    ctx.drawImage(originalCanvas, 0, headerHeight * dpr);
+      // Draw period label (subtle, top right)
+      ctx.font = `${13 * dpr}px sans-serif`;
+      ctx.fillStyle = "#666";
+      ctx.textAlign = "right";
+      ctx.fillText(periodLabel, exportCanvas.width - 20 * dpr, 30 * dpr);
 
-    // Convert to blob and download
-    exportCanvas.toBlob((blob) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const monthName =
-        selectedMonth === ""
-          ? "full-year"
-          : new Date(selectedYear, parseInt(selectedMonth)).toLocaleString(
-              "default",
-              { month: "short" }
-            );
-      a.download = `cycle-tracking_${monthName}-${selectedYear}.png`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }, "image/png");
+      // Draw original chart
+      ctx.drawImage(originalCanvas, 0, headerHeight * dpr);
+
+      // Draw footer
+      ctx.fillStyle = "#333";
+      ctx.fillRect(
+        0,
+        headerHeight * dpr + originalCanvas.height,
+        exportCanvas.width,
+        footerHeight * dpr
+      );
+      ctx.fillStyle = "#666";
+      ctx.font = `${11 * dpr}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(
+        "yourcyclekeeper.web.app",
+        centerX,
+        headerHeight * dpr + originalCanvas.height + 25 * dpr
+      );
+
+      // Convert to blob and download
+      exportCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const monthName =
+          selectedMonth === ""
+            ? "full-year"
+            : new Date(selectedYear, parseInt(selectedMonth)).toLocaleString(
+                "default",
+                { month: "short" }
+              );
+        a.download = `cycle-tracking_${monthName}-${selectedYear}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, "image/png");
+    };
+
+    // Fallback if logo fails to load
+    logo.onerror = () => {
+      const centerX = exportCanvas.width / 2;
+
+      // Draw "Your Cycle Keeper" text
+      ctx.fillStyle = "#A78BFA";
+      ctx.font = `${16 * dpr}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText("Your Cycle Keeper", centerX, 40 * dpr);
+
+      // Draw period label
+      ctx.font = `${13 * dpr}px sans-serif`;
+      ctx.fillStyle = "#666";
+      ctx.textAlign = "right";
+      ctx.fillText(periodLabel, exportCanvas.width - 20 * dpr, 30 * dpr);
+
+      // Draw original chart
+      ctx.drawImage(originalCanvas, 0, headerHeight * dpr);
+
+      // Draw footer
+      ctx.fillStyle = "#333";
+      ctx.fillRect(
+        0,
+        headerHeight * dpr + originalCanvas.height,
+        exportCanvas.width,
+        footerHeight * dpr
+      );
+      ctx.fillStyle = "#666";
+      ctx.font = `${11 * dpr}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(
+        "Private & Encrypted • yourcyclekeeper.web.app",
+        centerX,
+        headerHeight * dpr + originalCanvas.height + 25 * dpr
+      );
+
+      // Convert to blob and download
+      exportCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const monthName =
+          selectedMonth === ""
+            ? "full-year"
+            : new Date(selectedYear, parseInt(selectedMonth)).toLocaleString(
+                "default",
+                { month: "short" }
+              );
+        a.download = `cycle-tracking_${monthName}-${selectedYear}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, "image/png");
+    };
   } catch (error) {
     console.error("🚨 Chart download error:", error);
     showModal({
@@ -1608,7 +1675,27 @@ function renderCalendar() {
     cell.className = cls;
     cell.textContent = d; // safe: numeric only
     cell.dataset.date = dateStr; // used internally only
+    cell.tabIndex = 0; // Make focusable
+    cell.setAttribute("role", "button");
+    cell.setAttribute(
+      "aria-label",
+      `${d}, ${
+        dayType === "period"
+          ? "period day"
+          : dayType === "ovulation"
+          ? "ovulation day"
+          : dayType === "fertile"
+          ? "fertile day"
+          : "regular day"
+      }`
+    );
     cell.addEventListener("click", () => selectDay(dateStr));
+    cell.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        selectDay(dateStr);
+      }
+    });
     grid.appendChild(cell);
   }
 }
@@ -1625,9 +1712,26 @@ function changeMonth(dir) {
 }
 
 function closeLogPanel() {
-  const logPanel = document.getElementById("log-panel");
-  if (logPanel) {
-    logPanel.classList.remove("visible");
+  const logModal = document.getElementById("log-modal-overlay");
+  if (logModal) {
+    logModal.classList.remove("visible");
+  }
+
+  // Return focus to the calendar date that was selected (accessibility standard)
+  const previousDate = selectedDate;
+  selectedDate = null;
+  renderCalendar();
+
+  if (previousDate) {
+    // Use setTimeout to ensure calendar has rendered
+    setTimeout(() => {
+      const dateCell = document.querySelector(
+        `.cal-day[data-date="${previousDate}"]`
+      );
+      if (dateCell) {
+        dateCell.focus();
+      }
+    }, 0);
   }
 }
 
@@ -1636,8 +1740,8 @@ function selectDay(dateStr) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
   selectedDate = dateStr;
   renderCalendar();
-  const panel = document.getElementById("log-panel");
-  panel.classList.add("visible");
+  const modal = document.getElementById("log-modal-overlay");
+  modal.classList.add("visible");
   const d = fromISO(dateStr);
   document.getElementById("log-panel-date").textContent = d.toLocaleDateString(
     "default",
@@ -1675,7 +1779,13 @@ function selectDay(dateStr) {
   // Update period marker button visuals
   updatePeriodButtonVisuals();
 
-  panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  // Move focus into modal immediately (accessibility standard for modal dialogs)
+  setTimeout(() => {
+    const firstButton = document.getElementById("log-flow");
+    if (firstButton) {
+      firstButton.focus();
+    }
+  }, 0);
 }
 
 async function saveLog() {
@@ -1702,171 +1812,10 @@ async function saveLog() {
   await save();
 
   renderCalendar();
-  document.getElementById("log-panel").classList.remove("visible");
+  document.getElementById("log-modal-overlay").classList.remove("visible");
   updateStatusCard();
   updateInsights();
   if (navigator.vibrate) navigator.vibrate(40);
-}
-
-function cleanupConsecutiveMarkers() {
-  // Remove duplicate consecutive period start or end markers
-  const allDates = Object.keys(state.logs).sort();
-
-  // Track consecutive markers
-  let lastStartDate = null;
-  let lastEndDate = null;
-
-  for (const dateStr of allDates) {
-    const log = state.logs[dateStr];
-
-    if (log.periodStart) {
-      // If we have a previous start marker, remove it
-      if (lastStartDate) {
-        const prevLog = state.logs[lastStartDate];
-        if (prevLog && prevLog.periodStart) {
-          delete prevLog.periodStart;
-        }
-      }
-      lastStartDate = dateStr;
-    }
-
-    if (log.periodEnd) {
-      // If we have a previous end marker, remove it
-      if (lastEndDate && lastEndDate !== lastStartDate) {
-        const prevLog = state.logs[lastEndDate];
-        if (prevLog && prevLog.periodEnd) {
-          delete prevLog.periodEnd;
-        }
-      }
-      lastEndDate = dateStr;
-    }
-
-    // Reset when we see a new start (can't have end before next start)
-    if (log.periodStart) {
-      lastEndDate = null;
-    }
-  }
-
-  // Clean up empty log entries
-  cleanupEmptyLogs();
-}
-
-function cleanupEmptyLogs() {
-  // Remove log entries that have no data (all fields are empty/false/null)
-  for (const dateStr in state.logs) {
-    const log = state.logs[dateStr];
-    const hasFlow = !!log.flow;
-    const hasPain = !!log.pain;
-    const hasMood = log.mood !== undefined && log.mood !== null;
-    const hasNote = !!(log.note && log.note.trim());
-    const hasPeriodStart = !!log.periodStart;
-    const hasPeriodEnd = !!log.periodEnd;
-
-    // If no meaningful data, delete the entry
-    if (
-      !hasFlow &&
-      !hasPain &&
-      !hasMood &&
-      !hasNote &&
-      !hasPeriodStart &&
-      !hasPeriodEnd
-    ) {
-      delete state.logs[dateStr];
-    }
-  }
-}
-
-function recalculateCycleFromMarkers() {
-  // Find all manually marked period starts, sorted by date
-  const periodStarts = [];
-  const periodRanges = [];
-
-  for (const dateStr in state.logs) {
-    const log = state.logs[dateStr];
-    if (log.periodStart) {
-      periodStarts.push(dateStr);
-    }
-  }
-
-  if (periodStarts.length === 0) return; // No manual markers
-
-  periodStarts.sort();
-
-  // Calculate period durations for each marked start
-  for (let i = 0; i < periodStarts.length; i++) {
-    const startDate = periodStarts[i];
-    let endDate = null;
-    let duration = state.periodDuration; // default
-
-    // Look for the corresponding period end
-    const startD = fromISO(startDate);
-    for (const dateStr in state.logs) {
-      const log = state.logs[dateStr];
-      if (log.periodEnd) {
-        const endD = fromISO(dateStr);
-        // End should be after or equal to start and within reasonable range (1-10 days)
-        const diff = diffDays(startD, endD);
-        if (diff >= 0 && diff <= 10 && (!endDate || dateStr < endDate)) {
-          endDate = dateStr;
-          duration = diff + 1;
-        }
-      }
-    }
-
-    periodRanges.push({ start: startDate, duration });
-  }
-
-  // Update cycle history based on manual markers
-  const newHistory = [];
-  for (let i = 0; i < periodStarts.length; i++) {
-    const startDate = periodStarts[i];
-    const nextStart = periodStarts[i + 1];
-
-    let cycleLength = state.cycleLength; // default
-    if (nextStart) {
-      cycleLength = diffDays(fromISO(startDate), fromISO(nextStart));
-    }
-
-    newHistory.push({
-      start: startDate,
-      length: cycleLength,
-    });
-  }
-
-  if (newHistory.length > 0) {
-    state.cycleHistory = newHistory;
-
-    // Update lastPeriodStart to most recent marked start
-    state.lastPeriodStart = periodStarts[periodStarts.length - 1];
-
-    // Calculate average cycle length from manual markers
-    if (newHistory.length >= 2) {
-      const completedCycles = newHistory.slice(0, -1); // Exclude last incomplete cycle
-      if (completedCycles.length > 0) {
-        const avgLength = Math.round(
-          completedCycles.reduce((sum, c) => sum + c.length, 0) /
-            completedCycles.length
-        );
-        if (avgLength >= 20 && avgLength <= 45) {
-          state.cycleLength = avgLength;
-        }
-      }
-    }
-
-    // Update period duration based on manually marked ranges
-    const markedDurations = periodRanges
-      .filter((r) => r.duration > 0 && r.duration <= 10)
-      .map((r) => r.duration);
-
-    if (markedDurations.length > 0) {
-      const avgDuration = Math.round(
-        markedDurations.reduce((sum, d) => sum + d, 0) / markedDurations.length
-      );
-      if (avgDuration >= 1 && avgDuration <= 10) {
-        state.periodDuration = avgDuration;
-      }
-    }
-  }
 }
 
 function updateCycleHistory(dateStr) {
@@ -1927,14 +1876,25 @@ async function applySettings() {
     });
     return;
   }
-  state.lastPeriodStart = lp;
-  state.cycleLength = cl;
-  state.periodDuration = pd;
-  await save();
-  updateStatusCard();
-  renderCalendar();
-  updateInsights();
-  switchTab("calendar");
+
+  // Show confirmation modal before applying changes
+  showModal({
+    icon: "⚠️",
+    title: "Update Predictions?",
+    msg: "This will recalculate all cycle predictions based on your new settings. Your logged symptoms and notes will remain unchanged. Continue?",
+    confirmText: "Yes, Update",
+    cancelText: "Cancel",
+    onConfirm: async () => {
+      state.lastPeriodStart = lp;
+      state.cycleLength = cl;
+      state.periodDuration = pd;
+      await save();
+      updateStatusCard();
+      renderCalendar();
+      updateInsights();
+      switchTab("calendar");
+    },
+  });
 }
 
 function loadSettingsFields() {
@@ -2247,28 +2207,38 @@ async function _submitChangePinStep() {
 }
 
 function switchTab(tab) {
-  const allowed = ["calendar", "insights", "settings"];
+  const allowed = ["calendar", "insights", "settings", "about"];
   if (!allowed.includes(tab)) return;
   currentTab = tab;
+
+  // Sync navigation state
+  setNavigationState(tab, viewMonth);
+
   // Remove active from bottom nav items
-  ["bnav-calendar", "bnav-insights", "bnav-settings"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove("active");
-  });
+  ["bnav-calendar", "bnav-insights", "bnav-settings", "bnav-about"].forEach(
+    (id) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove("active");
+    }
+  );
 
   // Show/hide view panels
   const calView = document.getElementById("view-calendar");
   const insView = document.getElementById("view-insights");
   const setView = document.getElementById("view-settings");
+  const aboutView = document.getElementById("view-about");
   if (calView) calView.style.display = tab === "calendar" ? "block" : "none";
   if (insView) insView.style.display = tab === "insights" ? "block" : "none";
   if (setView) setView.style.display = tab === "settings" ? "block" : "none";
+  if (aboutView) aboutView.style.display = tab === "about" ? "block" : "none";
   if (insView)
     insView.className =
       "insights-wrap" + (tab === "insights" ? " visible" : "");
   if (setView)
     setView.className =
       "settings-wrap" + (tab === "settings" ? " visible" : "");
+  if (aboutView)
+    aboutView.className = "settings-wrap" + (tab === "about" ? " visible" : "");
 
   // Add active to current tab button
   if (tab === "calendar") {
@@ -2285,9 +2255,13 @@ function switchTab(tab) {
     if (bnav) bnav.classList.add("active");
     loadSettingsFields();
   }
+  if (tab === "about") {
+    const bnav = document.getElementById("bnav-about");
+    if (bnav) bnav.classList.add("active");
+  }
   // Hide log panel when switching tabs
-  const logPanel = document.getElementById("log-panel");
-  if (logPanel) logPanel.classList.remove("visible");
+  const logModal = document.getElementById("log-modal-overlay");
+  if (logModal) logModal.classList.remove("visible");
 }
 
 async function init() {
@@ -2297,6 +2271,17 @@ async function init() {
 
     // Setup event listeners now that DOM exists
     setupEventListeners();
+
+    // Initialize keyboard navigation
+    initKeyboardNavigation({
+      pinInput,
+      pinDelete,
+      setupPinInput,
+      setupPinDelete,
+      changePinInput,
+      closeLogPanel,
+      renderCalendar,
+    });
 
     const hasData = !!(await getFromDB(STORE_KEY));
     const hasSalt = !!(await getFromDB(SALT_KEY));
@@ -2388,6 +2373,8 @@ window.saveLog = saveLog;
 window.deleteLog = deleteLog;
 window.downloadChart = downloadChart;
 window.setChartFilter = setChartFilter;
+window.updatePainChart = updatePainChart;
+window.updateNoteCount = updateNoteCount;
 window.applySettings = applySettings;
 window.showChangePinModal = showChangePinModal;
 window.exportData = exportData;
