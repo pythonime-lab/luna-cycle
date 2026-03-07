@@ -458,7 +458,7 @@ body {
 }
 
 .status-card {
-  margin: 1.25rem 1rem 0;
+  margin: 1rem 1rem 0;
   background: linear-gradient(135deg, #2a1040 0%, #1a0828 100%);
   border: 0.0625rem solid var(--border);
   border-radius: 1.5rem;
@@ -467,11 +467,22 @@ body {
   overflow: hidden;
 }
 .status-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.125rem;
   color: var(--text-muted);
   margin-bottom: 0.375rem;
+}
+.status-phase::before {
+  content: "";
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
 }
 .status-title {
   font-family: Georgia, serif;
@@ -1330,44 +1341,61 @@ body {
 
 .legend-items {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
+  gap: 1.25rem;
+  align-items: center;
   cursor: pointer;
   user-select: none;
 }
 
+.legend-item--period,
+.legend-item--ovulation,
+.legend-item--flow,
+.legend-item--pain,
+.legend-item--mood {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .legend-item--period {
   color: #ff3d6b;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.2rem;
+  text-align: center;
   border-radius: 0.25rem;
   transition: all 0.2s;
 }
 
 .legend-item--ovulation {
   color: #ffd700;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.2rem;
+  text-align: center;
   border-radius: 0.25rem;
   transition: all 0.2s;
 }
 
 .legend-item--flow {
   color: #ff3d6b;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.2rem;
+  text-align: center;
   border-radius: 0.25rem;
   transition: all 0.2s;
 }
 
 .legend-item--pain {
   color: #ff6b4a;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.2rem;
+  text-align: center;
   border-radius: 0.25rem;
   transition: all 0.2s;
 }
 
 .legend-item--mood {
   color: #8b7fe8;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.2rem;
+  text-align: center;
   border-radius: 0.25rem;
   transition: all 0.2s;
   font-weight: bold;

@@ -991,7 +991,7 @@ function showMoodModal() {
 function updateStatusCard() {
   const info = getCycleInfo();
   if (!info) return;
-  safeText("status-phase", "● " + info.phase.toUpperCase());
+  safeText("status-phase", info.phase.toUpperCase());
   safeText("status-title", getPhaseMessage(info));
   safeText("status-subtitle", getPhaseSubtitle(info));
   safeText("cycle-day", info.cycleDay);
