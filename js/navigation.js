@@ -139,6 +139,12 @@ export function initKeyboardNavigation(callbacks) {
       } else if (e.key === "Backspace") {
         e.preventDefault();
         setupPinDelete();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const startBtn = document.getElementById("onboard-start-btn");
+        if (startBtn && !startBtn.disabled) {
+          startBtn.click();
+        }
       }
       return;
     }

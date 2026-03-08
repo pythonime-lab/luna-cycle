@@ -15,7 +15,7 @@
 
 "use strict";
 
-const CACHE_VERSION = "v20260307";
+const CACHE_VERSION = "v20260308b";
 const CACHE_NAME = `yourcyclekeeper-${CACHE_VERSION}`;
 
 self.addEventListener("install", (event) => {

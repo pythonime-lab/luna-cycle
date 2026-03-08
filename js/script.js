@@ -98,6 +98,22 @@ function setupEventListeners() {
       resetSessionTimer();
     });
   }
+
+  // Add explicit touch handlers for mobile nav buttons (fixes iOS/mobile touch issues)
+  const navButtons = document.querySelectorAll(".bnav-item");
+  navButtons.forEach((btn) => {
+    btn.addEventListener(
+      "touchend",
+      (e) => {
+        e.preventDefault();
+        const tab = btn.id.replace("bnav-", "");
+        if (["calendar", "insights", "settings", "about", "support"].includes(tab)) {
+          switchTab(tab);
+        }
+      },
+      { passive: false }
+    );
+  });
 }
 
 function showModal({
@@ -285,6 +301,9 @@ async function forgotPinFlow() {
           logs: {},
           cycleHistory: [],
         };
+        // Re-initialize module state references after creating new state
+        setCyclesState(state);
+        setPeriodMarkingState(state);
         pinAttempts = 0;
         pinLockUntil = 0;
         sessionPin = null;
@@ -398,6 +417,7 @@ async function startApp() {
     viewMonth = new Date();
     updateStatusCard();
     renderCalendar();
+    updateInsights();
     switchTab("calendar");
   } catch (error) {
     console.error("🚨 App startup error:", error);
@@ -992,7 +1012,7 @@ function showMoodModal() {
 function updateStatusCard() {
   const info = getCycleInfo();
   if (!info) return;
-  safeText("status-phase", info.phase.toUpperCase());
+  safeText("status-phase-text", info.phase.toUpperCase());
   safeText("status-title", getPhaseMessage(info));
   safeText("status-subtitle", getPhaseSubtitle(info));
   safeText("cycle-day", info.cycleDay);
@@ -1515,7 +1535,7 @@ function downloadChart() {
 
     // Load and draw logo
     const logo = new Image();
-    logo.src = "icons/your_cycle_keeper_logo.png";
+    logo.src = "icons/favicon-128x128.png";
     logo.onload = () => {
       // Draw logo (centered at top)
       const logoSize = 32 * dpr;

@@ -87,10 +87,10 @@
     <!-- Canonical URL -->
     <link rel="canonical" href="https://yourcyclekeeper.web.app" />
 
-    <link rel="stylesheet" href="style.css?v=20260307" />
+    <link rel="stylesheet" href="style.css?v=20260308" />
     <link
       rel="stylesheet"
-      href="style-desktop.css?v=20260307"
+      href="style-desktop.css?v=20260308"
       media="screen and (min-width: 768px)"
     />
     <link rel="manifest" href="manifest.json" />
@@ -100,7 +100,7 @@
       sizes="16x16"
       href="icons/favicon-16x16.png"
     />
-    <script src="js/indexeddb-storage.js"></script>
+    <script src="js/indexeddb-storage.js" defer></script>
     <script type="module" src="js/script.js"></script>
     <link
       rel="icon"
@@ -225,7 +225,7 @@
     <div id="lock-screen">
       <div class="lock-icon" id="lock-icon">
         <img
-          src="icons/your_cycle_keeper_logo.png"
+          src="icons/favicon-128x128.png"
           alt="Your Cycle Keeper Logo"
           class="logo-lock"
         />
@@ -267,7 +267,7 @@
     <div id="onboarding" class="hidden">
       <div class="onboard-moon">
         <img
-          src="icons/your_cycle_keeper_logo.png"
+          src="icons/favicon-128x128.png"
           alt="Your Cycle Keeper Logo"
           class="logo-onboard"
         />
@@ -494,7 +494,7 @@
           </div>
 
           <div class="status-card">
-            <div class="status-phase" id="status-phase">Current Phase</div>
+            <div class="status-phase" id="status-phase"><span class="phase-dot"></span><span id="status-phase-text">Current Phase</span></div>
             <div class="status-title" id="status-title">—</div>
             <div class="status-subtitle" id="status-subtitle">Loading…</div>
             <div class="status-row">
