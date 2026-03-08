@@ -364,16 +364,21 @@
       .how-image { display: none; }
       .features-grid { grid-template-columns: 1fr 1fr; }
       .pillars-grid { grid-template-columns: 1fr 1fr; }
-      .pillar { padding: 1.5rem; border-left: none; border-top: 1px solid var(--border); }
-      .pillar:first-child { border-top: none; }
+      .pillar, .pillar:first-child { padding: 1.5rem; border-left: none; border-top: 1px solid var(--border); }
+      .pillar:nth-child(-n+2) { border-top: none; }
       .faq-layout { grid-template-columns: 1fr; gap: 2rem; }
       .comparison-table thead th:last-child,
       .comparison-table td:last-child { display: none; }
     }
     @media (max-width: 600px) {
+      .nav-logo { font-size: 1rem; }
+      .nav-actions { gap: 0.5rem; }
+      .nav-support { padding: 0.45rem 0.7rem; font-size: 0.75rem; }
+      .nav-cta { padding: 0.45rem 0.9rem; font-size: 0.75rem; }
       .features-grid { grid-template-columns: 1fr; }
       .pillars-grid { grid-template-columns: 1fr; }
-
+      .pillar, .pillar:first-child { padding: 1.5rem; }
+      footer { flex-direction: column; text-align: center; align-items: center; }
     }
   </style>
 </head>
