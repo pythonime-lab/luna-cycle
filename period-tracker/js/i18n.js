@@ -223,11 +223,13 @@ const LOCALES = {
     calendar_day_fertile: "fertile day",
     calendar_day_regular: "regular day",
 
+    // Phase badge labels (short, uppercase-safe)
+    follicular: "Follicular",
+
     // Language switcher
     language_label: "Language",
     lang_en: "English",
     lang_ru: "Русский",
-    lang_be: "Беларуская",
     lang_es: "Español",
 
     // Settings HTML labels
@@ -436,10 +438,11 @@ const LOCALES = {
     calendar_day_fertile: "фертильный день",
     calendar_day_regular: "обычный день",
 
+    follicular: "Фолликулярная",
+
     language_label: "Язык",
     lang_en: "English",
     lang_ru: "Русский",
-    lang_be: "Беларуская",
     lang_es: "Español",
 
     settings_cycle_section: "Настройки цикла",
@@ -477,7 +480,7 @@ const LOCALES = {
     timeout_after: "с бездействия — нажмите для сброса",
   },
 
-  // ── Belarusian ─────────────────────────────────────────────────────────────
+  // ── Belarusian (inactive — translations preserved for future use) ───────────
   be: {
     storage_error_title: "Памылка сховішча",
     storage_error_msg:
@@ -647,6 +650,8 @@ const LOCALES = {
     calendar_day_fertile: "фертыльны дзень",
     calendar_day_regular: "звычайны дзень",
 
+    follicular: "Фалікулярная",
+
     language_label: "Мова",
     lang_en: "English",
     lang_ru: "Русский",
@@ -690,85 +695,9 @@ const LOCALES = {
 
   // ── Spanish ────────────────────────────────────────────────────────────────
   es: {
-    // Custom UI labels
-    cycle_stats: "Cycle Stats",
-    avg_length: "Avg Length",
-    cycles_logged: "Cycles Logged",
-    avg_period: "Avg Period",
-    fertile_days: "Fertile Days",
-    symptom_tracking: "Symptom Tracking",
-    period: "Period",
-    ovulation: "Ovulation",
-    flow: "Flow",
-    pain: "Pain",
-    mood: "Mood",
-    how_it_works: "How Your Cycle Keeper Works",
-    how_it_works_desc:
-      "Your Cycle Keeper estimates your fertile window by tracking cycle patterns. Ovulation is estimated ~14 days before your next period. Fertile days are calculated as day 8 through (cycle length − 11). For regular 28-day cycles, this means days 8–17 are typically fertile, with ovulation around day 14. ⚠️ This is an estimation tool only. Not for contraception. Stress, illness & medications can shift timing.",
-    cycle_history: "Cycle History",
-    all_months: "All Months",
-    cycle_day: "Cycle Day",
-    until_next: "Until Next",
-    day_1: "Day 1",
-    avg_length_short: "Avg Length",
-    period_short: "Period",
-    fertile: "Fertile",
-    ovulation_short: "Ovulation",
-    luteal: "Luteal",
-
     storage_error_title: "Error de almacenamiento",
-    cycle_stats: "Статистика цикла",
-    avg_length: "Средняя длина",
-    cycles_logged: "Циклов отмечено",
-    avg_period: "Средняя менструация",
-    fertile_days: "Фертильные дни",
-    symptom_tracking: "Отслеживание симптомов",
-    period: "Менструация",
-    ovulation: "Овуляция",
-    flow: "Выделения",
-    pain: "Боль",
-    mood: "Настроение",
-    how_it_works: "Как работает Your Cycle Keeper",
-    how_it_works_desc:
-      "Your Cycle Keeper оценивает фертильное окно по шаблонам цикла. Овуляция — примерно за 14 дней до следующей менструации. Фертильные дни — с 8 по (длина цикла − 11). Для регулярного 28-дневного цикла это обычно дни 8–17, овуляция около 14 дня. ⚠️ Это только инструмент оценки. Не для контрацепции. Стресс, болезни и лекарства могут сдвигать сроки.",
-    cycle_history: "История циклов",
-    all_months: "Все месяцы",
-    cycle_day: "День цикла",
-    until_next: "До следующей",
-    day_1: "День 1",
-    avg_length_short: "Средняя длина",
-    period_short: "Менструация",
-    fertile: "Фертильные",
-    ovulation_short: "Овуляция",
-    luteal: "Лютеиновая",
-
     storage_error_msg:
       "No se pudo acceder al almacenamiento. Por favor, recarga la página.",
-    cycle_stats: "Статыстыка цыкла",
-    avg_length: "Сярэдняя даўжыня",
-    cycles_logged: "Цыклаў адзначана",
-    avg_period: "Сярэдняя менструацыя",
-    fertile_days: "Фертыльныя дні",
-    symptom_tracking: "Адсочванне сімптомаў",
-    period: "Менструацыя",
-    ovulation: "Авуляцыя",
-    flow: "Выдзяленні",
-    pain: "Боль",
-    mood: "Настрой",
-    how_it_works: "Як працуе Your Cycle Keeper",
-    how_it_works_desc:
-      "Your Cycle Keeper вызначае фертыльнае акно па шаблонах цыкла. Авуляцыя — прыкладна за 14 дзён да наступнай менструацыі. Фертыльныя дні — з 8 па (даўжыня цыкла − 11). Для звычайнага 28-дзённага цыкла гэта звычайна дні 8–17, авуляцыя каля 14 дня. ⚠️ Гэта толькі ацэначны інструмент. Не для кантрацэпцыі. Стрэс, хваробы і лекі могуць зрушыць тэрміны.",
-    cycle_history: "Гісторыя цыклаў",
-    all_months: "Усе месяцы",
-    cycle_day: "Дзень цыкла",
-    until_next: "Да наступнай",
-    day_1: "Дзень 1",
-    avg_length_short: "Сярэдняя даўжыня",
-    period_short: "Менструацыя",
-    fertile: "Фертыльныя",
-    ovulation_short: "Авуляцыя",
-    luteal: "Лютэінавая",
-
     db_error_title: "Error de base de datos",
     cycle_stats: "Estadísticas del ciclo",
     avg_length: "Longitud promedio",
@@ -954,10 +883,11 @@ const LOCALES = {
     calendar_day_fertile: "día fértil",
     calendar_day_regular: "día regular",
 
+    follicular: "Folicular",
+
     language_label: "Idioma",
     lang_en: "English",
     lang_ru: "Русский",
-    lang_be: "Беларуская",
     lang_es: "Español",
 
     settings_cycle_section: "Configuración del ciclo",
@@ -999,7 +929,7 @@ const LOCALES = {
 // ─── State ────────────────────────────────────────────────────────────────────
 
 const LANG_STORAGE_KEY = "yck_lang";
-const SUPPORTED = ["en", "ru", "be", "es"];
+const SUPPORTED = ["en", "ru", "es"];
 
 function detectLanguage() {
   try {

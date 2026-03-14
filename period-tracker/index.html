@@ -467,40 +467,40 @@
             <div class="status-row">
               <div class="status-pill">
                 <div class="val" id="cycle-day">—</div>
-                <div class="lbl">Cycle Day</div>
+                <div class="lbl" data-i18n="cycle_day">Cycle Day</div>
               </div>
               <div class="status-pill">
                 <div class="val" id="days-until-next">—</div>
-                <div class="lbl">Until Next</div>
+                <div class="lbl" data-i18n="until_next">Until Next</div>
               </div>
               <div class="status-pill">
                 <div class="val" id="cycle-len-disp">—</div>
-                <div class="lbl">Avg Length</div>
+                <div class="lbl" data-i18n="avg_length_short">Avg Length</div>
               </div>
             </div>
           </div>
 
           <div class="cycle-bar-wrap">
             <div class="cycle-bar-labels">
-              <span>Day 1</span><span id="bar-cycle-end">Day 28</span>
+              <span data-i18n="day_1">Day 1</span><span id="bar-cycle-end">Day 28</span>
             </div>
             <div class="cycle-bar" id="cycle-bar"></div>
             <div class="bar-legend">
               <div class="legend-item">
                 <div class="legend-dot legend-dot--rose"></div>
-                Period
+                <span data-i18n="period_short">Period</span>
               </div>
               <div class="legend-item">
                 <div class="legend-dot legend-dot--fertile"></div>
-                Fertile
+                <span data-i18n="fertile">Fertile</span>
               </div>
               <div class="legend-item">
                 <div class="legend-dot legend-dot--ovulation"></div>
-                Ovulation
+                <span data-i18n="ovulation_short">Ovulation</span>
               </div>
               <div class="legend-item">
                 <div class="legend-dot legend-dot--lavender"></div>
-                Luteal
+                <span data-i18n="luteal">Luteal</span>
               </div>
             </div>
           </div>
@@ -633,29 +633,29 @@
       <!-- INSIGHTS VIEW -->
       <div class="insights-wrap" id="view-insights">
         <div class="insight-card">
-          <h3>Cycle Stats</h3>
+          <h3 data-i18n="cycle_stats">Cycle Stats</h3>
           <div class="stat-grid">
             <div class="stat-box">
               <div class="big stat-color--rose" id="avg-cycle">—</div>
-              <div class="sm">Avg Length</div>
+              <div class="sm" data-i18n="avg_length">Avg Length</div>
             </div>
             <div class="stat-box">
               <div class="big stat-color--lavender" id="avg-period">—</div>
-              <div class="sm">Avg Period</div>
+              <div class="sm" data-i18n="avg_period">Avg Period</div>
             </div>
             <div class="stat-box">
               <div class="big stat-color--teal" id="tracked-cycles">—</div>
-              <div class="sm">Cycles Logged</div>
+              <div class="sm" data-i18n="cycles_logged">Cycles Logged</div>
             </div>
             <div class="stat-box">
               <div class="big stat-color--fertile" id="fertile-window">—</div>
-              <div class="sm">Fertile Days</div>
+              <div class="sm" data-i18n="fertile_days">Fertile Days</div>
             </div>
           </div>
         </div>
         <div class="insight-card">
           <div class="chart-header-row">
-            <h3>Symptom Tracking</h3>
+            <h3 data-i18n="symptom_tracking">Symptom Tracking</h3>
             <button
               onclick="downloadChart()"
               aria-label="Download chart"
@@ -689,7 +689,7 @@
               aria-label="Select month to view"
               class="chart-select"
             >
-              <option value="" class="chart-select option">All Months</option>
+              <option value="" class="chart-select option" data-i18n="all_months">All Months</option>
               <option value="0" class="chart-select option">January</option>
               <option value="1" class="chart-select option">February</option>
               <option value="2" class="chart-select option">March</option>
@@ -723,7 +723,7 @@
                 aria-label="Toggle period data visibility"
                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setChartFilter('period');}"
                 class="legend-item--period"
-                >▮ Period</span
+                >▮ <span data-i18n="period_short">Period</span></span
               >
               <span
                 id="legend-ovulation"
@@ -733,7 +733,7 @@
                 aria-label="Toggle ovulation data visibility"
                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setChartFilter('ovulation');}"
                 class="legend-item--ovulation"
-                >▮ Ovulation</span
+                >▮ <span data-i18n="ovulation_short">Ovulation</span></span
               >
               <span
                 id="legend-flow"
@@ -743,7 +743,7 @@
                 aria-label="Toggle flow data visibility"
                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setChartFilter('flow');}"
                 class="legend-item--flow"
-                >▮ Flow</span
+                >▮ <span data-i18n="flow">Flow</span></span
               >
               <span
                 id="legend-pain"
@@ -753,7 +753,7 @@
                 aria-label="Toggle pain data visibility"
                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setChartFilter('pain');}"
                 class="legend-item--pain"
-                >▮ Pain</span
+                >▮ <span data-i18n="pain">Pain</span></span
               >
               <span
                 id="legend-mood"
@@ -763,27 +763,29 @@
                 aria-label="Toggle mood data visibility"
                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setChartFilter('mood');}"
                 class="legend-item--mood"
-                >▮ Mood</span
+                >▮ <span data-i18n="mood">Mood</span></span
               >
             </div>
           </div>
         </div>
         <div class="insight-card">
-          <h3>How Your Cycle Keeper Works</h3>
-          <div class="info-box">
+          <h3 data-i18n="how_it_works">How Your Cycle Keeper Works</h3>
+          <div class="info-box" data-i18n="how_it_works_desc">
             Your Cycle Keeper estimates your fertile window by tracking cycle
             patterns.
-            <strong>Ovulation</strong> is estimated ~14 days before your next
-            period. <strong>Fertile days</strong> are calculated as day 8
-            through (cycle length − 11).<br /><br />
+            Ovulation is estimated ~14 days before your next
+            period. Fertile days are calculated as day 8
+            through (cycle length − 11).
+
             For regular 28-day cycles, this means days 8–17 are typically
-            fertile, with ovulation around day 14.<br /><br />
-            ⚠️ <strong>This is an estimation tool only.</strong> Not for
+            fertile, with ovulation around day 14.
+
+            ⚠️ This is an estimation tool only. Not for
             contraception. Stress, illness &amp; medications can shift timing.
           </div>
         </div>
         <div class="insight-card">
-          <h3>Cycle History</h3>
+          <h3 data-i18n="cycle_history">Cycle History</h3>
           <div id="cycle-history">
             <p class="empty-history">No history yet.</p>
           </div>
@@ -942,15 +944,15 @@
       <!-- SETTINGS VIEW -->
       <div class="settings-wrap" id="view-settings">
         <div class="settings-section">
-          <h3>Cycle Settings</h3>
-          <div class="field-label">Last period start date</div>
+          <h3 data-i18n="settings_cycle_section">Cycle Settings</h3>
+          <div class="field-label" data-i18n="settings_last_period">Last period start date</div>
           <input
             class="field-input"
             type="date"
             id="s-last-period"
             autocomplete="off"
           />
-          <div class="field-label">Average cycle length (days)</div>
+          <div class="field-label" data-i18n="settings_cycle_length">Average cycle length (days)</div>
           <input
             class="field-input"
             type="number"
@@ -959,7 +961,7 @@
             max="45"
             autocomplete="off"
           />
-          <div class="field-label">Period duration (days)</div>
+          <div class="field-label" data-i18n="settings_period_duration">Period duration (days)</div>
           <input
             class="field-input"
             type="number"
@@ -968,12 +970,12 @@
             max="10"
             autocomplete="off"
           />
-          <button class="apply-btn" onclick="applySettings()">
+          <button class="apply-btn" onclick="applySettings()" data-i18n="settings_update_btn">
             Update Predictions
           </button>
         </div>
         <div class="settings-section">
-          <h3>Security &amp; Privacy</h3>
+          <h3 data-i18n="settings_security_section">Security &amp; Privacy</h3>
           <div class="sec-badge">AES-256-GCM Encrypted</div>
           <div class="info-box info-box--margin">
             All data is encrypted with your PIN before being stored. Cycle
@@ -984,18 +986,19 @@
           <button
             class="apply-btn btn--change-pin"
             onclick="showChangePinModal()"
+            data-i18n="settings_change_pin"
           >
             Change PIN
           </button>
           <div id="backup-status" class="backup-status"></div>
-          <button class="apply-btn btn--export" onclick="exportData()">
+          <button class="apply-btn btn--export" onclick="exportData()" data-i18n="settings_export">
             Export Encrypted Backup
           </button>
-          <button class="apply-btn btn--import" onclick="importData()">
+          <button class="apply-btn btn--import" onclick="importData()" data-i18n="settings_import">
             Import Encrypted Backup
           </button>
           <div class="info-box info-box--security">
-            <strong>Storage used:</strong>
+            <strong data-i18n="settings_storage_label">Storage used:</strong>
             <span id="storage-usage">Calculating...</span>
           </div>
           <div class="info-box info-box--data-warning">
@@ -1004,9 +1007,17 @@
             or "cookies and site data" in your browser settings WILL erase all
             your cycle data. Always export a backup first!
           </div>
-          <button class="danger-btn" onclick="confirmClear()">
+          <button class="danger-btn" onclick="confirmClear()" data-i18n="settings_erase">
             Erase All Data
           </button>
+        </div>
+        <div class="settings-section">
+          <h3 data-i18n="language_label">Language</h3>
+          <select id="lang-switcher" class="field-input">
+            <option value="en" data-i18n="lang_en">English</option>
+            <option value="ru" data-i18n="lang_ru">Русский</option>
+            <option value="es" data-i18n="lang_es">Español</option>
+          </select>
         </div>
       </div>
     </div>

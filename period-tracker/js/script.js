@@ -1015,7 +1015,14 @@ function showMoodModal() {
 function updateStatusCard() {
   const info = getCycleInfo();
   if (!info) return;
-  safeText("status-phase-text", info.phase.toUpperCase());
+  const phaseTagKey = {
+    Menstruation: "period_short",
+    Follicular: "follicular",
+    "Fertile Window": "fertile",
+    Ovulation: "ovulation_short",
+    Luteal: "luteal",
+  }[info.phase] || "period_short";
+  safeText("status-phase-text", t(phaseTagKey).toUpperCase());
   safeText("status-title", getPhaseMessage(info));
   safeText("status-subtitle", getPhaseSubtitle(info));
   safeText("cycle-day", info.cycleDay);
@@ -2520,6 +2527,7 @@ async function init() {
   initializePainChartControls();
   applyI18n();
   _initLangSwitcher();
+  _updateMonthDropdown();
 }
 
 function _initLangSwitcher() {
@@ -2529,6 +2537,7 @@ function _initLangSwitcher() {
   sel.addEventListener("change", () => {
     setLanguage(sel.value);
     applyI18n();
+    _updateMonthDropdown();
     // Re-render dynamic content with new language
     updateStatusCard();
     renderCalendar();
@@ -2538,6 +2547,20 @@ function _initLangSwitcher() {
       document.getElementById("lock-sub").textContent = t("unlock_subtitle");
     }
   });
+}
+
+function _updateMonthDropdown() {
+  const sel = document.getElementById("pain-view-month");
+  if (!sel) return;
+  const lang = getLanguage();
+  const currentValue = sel.value;
+  // Update all month options (index 1–12, value 0–11)
+  for (let i = 0; i < 12; i++) {
+    const option = sel.options[i + 1]; // skip "All Months" at index 0
+    if (!option) continue;
+    option.textContent = new Date(2000, i, 1).toLocaleString(lang, { month: "long" });
+  }
+  sel.value = currentValue;
 }
 
 // Wait for DOM to be ready before initializing
